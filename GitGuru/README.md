@@ -157,6 +157,19 @@ python test_app.py
 
 ---
 
+### 7. Run 10-Question Evaluation Benchmark (Day 5 / Checkpoint 1)
+
+Run the real user evaluation scenarios (including in-scope questions and the out-of-scope boundary test):
+
+```powershell
+python eval/run_eval.py
+```
+
+- **Documentation & LLM Architecture:** See [`docs/how_llms_work.md`](docs/how_llms_work.md)
+- **Evaluation Questions Detail:** See [`docs/questions.md`](docs/questions.md) and [`eval/questions.json`](eval/questions.json)
+
+---
+
 ## Project Structure
 
 ```
@@ -177,6 +190,12 @@ GitGuru/
 │   ├── records.json       # Curated knowledge base records
 │   ├── sample_records.py  # Fallback sample records
 │   └── raw/               # Downloaded documentation files
+├── docs/
+│   ├── how_llms_work.md   # Day 5: Deep learning & LLM architecture guide + Mermaid diagram
+│   └── questions.md       # Day 5: 10 real user evaluation questions (with Q6 unanswerable)
+├── eval/
+│   ├── questions.json     # Machine-readable evaluation dataset
+│   └── run_eval.py        # Automated benchmark runner for the 10 questions
 ├── requirements.txt       # Project dependencies
 ├── test_app.py            # Automated test suite
 └── README.md              # Documentation and 'How to run' guide

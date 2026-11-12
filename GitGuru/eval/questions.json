@@ -1,0 +1,82 @@
+[
+  {
+    "id": "Q1",
+    "question": "What is Git, and how is it different from GitHub?",
+    "category": "Git & GitHub Fundamentals",
+    "answerable_by_data": true,
+    "expected_record_ids": [1, 2],
+    "source": "Project Card: Core Beginner Question 1"
+  },
+  {
+    "id": "Q2",
+    "question": "How do I clone an existing remote repository onto my local machine?",
+    "category": "Repository Operations",
+    "answerable_by_data": true,
+    "expected_record_ids": [4],
+    "source": "Project Card: Core Beginner Question 2"
+  },
+  {
+    "id": "Q3",
+    "question": "How do I stage changes and make a commit with a descriptive message?",
+    "category": "Staging & Commits",
+    "answerable_by_data": true,
+    "expected_record_ids": [5, 6],
+    "source": "Project Card: Core Beginner Question 3"
+  },
+  {
+    "id": "Q4",
+    "question": "How do I create a new branch, switch to it, and merge changes back into main?",
+    "category": "Git Branching",
+    "answerable_by_data": true,
+    "expected_record_ids": [9, 10],
+    "source": "Project Card: Core Beginner Question 4"
+  },
+  {
+    "id": "Q5",
+    "question": "How do I push local commits to a remote GitHub repository using git push?",
+    "category": "Remote & GitHub Collaboration",
+    "answerable_by_data": true,
+    "expected_record_ids": [14],
+    "source": "Project Card: Core Beginner Question 5"
+  },
+  {
+    "id": "Q6",
+    "question": "How do I recover a deleted branch from 6 months ago if my local hard drive was completely formatted, zeroed out, and the code was never pushed to any remote repository?",
+    "category": "Unanswerable / Out of Scope",
+    "answerable_by_data": false,
+    "expected_record_ids": [],
+    "source": "Project Card: Out-of-Scope Boundary Question 6"
+  },
+  {
+    "id": "Q7",
+    "question": "How do I resolve a merge conflict in Git when two branches edit the same lines?",
+    "category": "Troubleshooting & Conflicts",
+    "answerable_by_data": true,
+    "expected_record_ids": [11],
+    "source": "Real User Scenario: Merge Conflicts"
+  },
+  {
+    "id": "Q8",
+    "question": "How do I undo a commit or discard uncommitted changes using git reset or revert?",
+    "category": "Troubleshooting & Undo",
+    "answerable_by_data": true,
+    "expected_record_ids": [12],
+    "source": "Real User Scenario: Reverting Changes"
+  },
+  {
+    "id": "Q9",
+    "question": "How do I temporarily save uncommitted work without committing so I can switch branches?",
+    "category": "Working State & Stashing",
+    "answerable_by_data": true,
+    "expected_record_ids": [9, 13],
+    "source": "Real User Scenario: Git Stash"
+  },
+  {
+    "id": "Q10",
+    "question": "How do I set up and configure SSH key authentication for pushing to GitHub securely?",
+    "category": "GitHub Authentication",
+    "answerable_by_data": true,
+    "expected_record_ids": [17],
+    "source": "Real User Scenario: SSH Authentication"
+  }
+]
