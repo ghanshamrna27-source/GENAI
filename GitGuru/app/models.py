@@ -62,3 +62,17 @@ class HealthResponse(BaseModel):
     description: str
     records_count: int
     version: str
+
+
+class ChatRequest(BaseModel):
+    message: str = Field(..., min_length=2, description="The Git/GitHub question or prompt for the assistant")
+    version: Optional[str] = Field("v2", description="Prompt template version: 'v1' (direct) or 'v2' (structured & grounded)")
+    provider: Optional[str] = Field(None, description="Optional LLM provider override ('groq', 'gemini')")
+
+
+class ChatResponse(BaseModel):
+    answer: str = Field(..., description="The assistant's explanation or resolution")
+    confidence: str = Field(..., description="Confidence rating: 'high', 'medium', or 'low'")
+    follow_up: str = Field(..., description="Recommended follow-up command or proactive question")
+    provider: Optional[str] = Field(None, description="The backend provider that handled the request")
+    model: Optional[str] = Field(None, description="The model used to generate the response")

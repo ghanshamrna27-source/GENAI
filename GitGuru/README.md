@@ -20,6 +20,13 @@ GitGuru is an intelligent assistant designed to help beginners and developers le
   - `GET /records/{id}`: Look up record by ID (with 404 for missing records)
   - `GET /search?q=`: Smart search ranked by TF-IDF + Cosine Similarity
   - `POST /questions`: Ask questions and receive relevant answers from the knowledge base
+  - `POST /chat`: LLM-powered chat (Groq / Gemini) returning structured JSON (`answer`, `confidence`, `follow_up`)
+- **LLM Provider Wrapper (`app/llm.py`):**
+  - Connects to Groq (`llama-3.3-70b-versatile`) and Google Gemini (`gemini-1.5-flash`)
+  - Includes offline grounded TF-IDF fallback for test and CI environments
+- **Prompt Engineering (`prompts/`):**
+  - Core system prompt defining GitGuru persona and guardrails
+  - Direct task prompt (`v1`) and structured context-grounded few-shot prompt (`v2`)
 - **Data Analysis (`analysis/explore.py`):**
   - Explores records using **pandas** and prints 3 key domain insights (category breakdown, content depth, documentation coverage).
 - **Machine Learning Smart Search (`app/smart_search.py`):**
@@ -119,6 +126,25 @@ $body = @{
 Invoke-RestMethod -Uri "http://127.0.0.1:8000/questions" -Method Post -Body $body -ContentType "application/json"
 ```
 
+#### Chat with GitGuru LLM (POST /chat)
+```powershell
+$chatBody = @{
+    message = "How do I resolve a merge conflict in Git?"
+    version = "v2"
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/chat" -Method Post -Body $chatBody -ContentType "application/json"
+```
+```json
+{
+  "answer": "Open conflicted files, inspect conflict markers (<<<<<<<, =======, >>>>>>>), choose the desired code, remove markers, stage resolved files with 'git add', and complete the commit.",
+  "confidence": "high",
+  "follow_up": "Once conflicts are resolved, would you like to verify the status with 'git status'?",
+  "provider": "gitguru-offline-grounded",
+  "model": "tfidf-retrieval-fallback"
+}
+```
+
 ---
 
 ### 4. Run Data Exploration with pandas
@@ -157,16 +183,14 @@ python test_app.py
 
 ---
 
-### 7. Run 10-Question Evaluation Benchmark (Day 5 / Checkpoint 1)
-
-Run the real user evaluation scenarios (including in-scope questions and the out-of-scope boundary test):
-
+### 7. Run 10-Question Evaluation Benchmark
 ```powershell
 python eval/run_eval.py
 ```
 
 - **Documentation & LLM Architecture:** See [`docs/how_llms_work.md`](docs/how_llms_work.md)
 - **Evaluation Questions Detail:** See [`docs/questions.md`](docs/questions.md) and [`eval/questions.json`](eval/questions.json)
+- **Prompt Version Comparison Report:** See [`eval/prompt_compare.md`](eval/prompt_compare.md)
 
 ---
 
@@ -176,27 +200,35 @@ python eval/run_eval.py
 GitGuru/
 ├── analysis/
 │   ├── __init__.py
-│   └── explore.py         # S2: pandas analysis printing 3 facts
+│   └── explore.py            # S2: pandas analysis printing 3 facts
 ├── app/
 │   ├── __init__.py
-│   ├── cli.py             # Interactive CLI menu
-│   ├── fetch.py           # Documentation scraper
-│   ├── ingest.py          # HTML parser and record generator
-│   ├── main.py            # S1: FastAPI service with health, records, search, questions
-│   ├── models.py          # Pydantic schemas and dataclasses
-│   ├── records.py         # Record loading and persistence utilities
-│   └── smart_search.py    # S2: TF-IDF + Cosine similarity search ranker
+│   ├── cli.py                # Interactive CLI menu
+│   ├── fetch.py              # Documentation scraper
+│   ├── ingest.py             # HTML parser and record generator
+│   ├── llm.py                # LLM provider wrapper (Groq / Gemini / Grounded Fallback)
+│   ├── main.py               # FastAPI service (health, records, search, questions, chat)
+│   ├── models.py             # Pydantic schemas and dataclasses
+│   ├── records.py            # Record loading and persistence utilities
+│   └── smart_search.py       # TF-IDF + Cosine similarity search ranker
 ├── data/
-│   ├── records.json       # Curated knowledge base records
-│   ├── sample_records.py  # Fallback sample records
-│   └── raw/               # Downloaded documentation files
+│   ├── records.json          # Curated knowledge base records
+│   ├── sample_records.py     # Fallback sample records
+│   └── raw/                  # Downloaded documentation files
 ├── docs/
-│   ├── how_llms_work.md   # Day 5: Deep learning & LLM architecture guide + Mermaid diagram
-│   └── questions.md       # Day 5: 10 real user evaluation questions (with Q6 unanswerable)
+│   ├── how_llms_work.md      # Deep learning & LLM architecture guide + Mermaid diagram
+│   └── questions.md          # 10 real user evaluation questions (with Q6 unanswerable)
 ├── eval/
-│   ├── questions.json     # Machine-readable evaluation dataset
-│   └── run_eval.py        # Automated benchmark runner for the 10 questions
-├── requirements.txt       # Project dependencies
-├── test_app.py            # Automated test suite
-└── README.md              # Documentation and 'How to run' guide
+│   ├── prompt_compare.md     # Side-by-side comparison of 2 prompt versions across 10 questions
+│   ├── questions.json        # Machine-readable evaluation dataset
+│   └── run_eval.py           # Automated benchmark runner for the 10 questions
+├── prompts/
+│   ├── __init__.py           # Prompt loader and template formatter
+│   ├── system_prompt.txt     # GitGuru persona, rules, and JSON schema
+│   ├── task_troubleshooting.txt # Prompt V1: Direct resolution
+│   └── task_concept_coach.txt   # Prompt V2: Structured grounded guidance
+├── .env.example              # Example environment configuration (Groq & Gemini keys)
+├── requirements.txt          # Project dependencies
+├── test_app.py               # Automated test suite
+└── README.md                 # Documentation and 'How to run' guide
 ```

@@ -2,7 +2,7 @@
 app/main.py
 FastAPI Web API service for GitGuru — Git & GitHub Learning Assistant.
 Provides endpoints for health checks, records retrieval, smart TF-IDF search,
-and learner question answering.
+learner question answering, and LLM-powered chat.
 """
 
 from typing import List, Optional
@@ -14,9 +14,12 @@ from app.models import (
     QuestionRequest,
     QuestionResponse,
     HealthResponse,
+    ChatRequest,
+    ChatResponse,
 )
 from app.records import load_records, get_by_id
 from app.smart_search import rank_records
+from app.llm import generate_chat_response
 
 app = FastAPI(
     title="GitGuru API",
@@ -47,6 +50,7 @@ def root():
             "get_record_by_id": "GET /records/{id}",
             "smart_search": "GET /search?q=",
             "ask_question": "POST /questions",
+            "chat": "POST /chat",
         },
     }
 
@@ -138,6 +142,24 @@ def ask_question(payload: QuestionRequest):
         relevant_records=[],
         message="No high-confidence match found for your query. Consider checking official documentation.",
     )
+
+
+@app.post("/chat", response_model=ChatResponse, status_code=status.HTTP_200_OK, tags=["LLM Chat"])
+def chat(payload: ChatRequest):
+    """
+    Chat with GitGuru LLM Assistant (Groq / Gemini / Grounded Fallback).
+    Guided by a Git & GitHub system prompt.
+    Returns structured JSON with fields:
+      - answer: The solution or explanation
+      - confidence: Assessment rating ('high', 'medium', 'low')
+      - follow_up: Proactive next command or logical follow-up step
+    """
+    response_data = generate_chat_response(
+        query=payload.message,
+        version=payload.version or "v2",
+        provider=payload.provider,
+    )
+    return ChatResponse(**response_data)
 
 
 if __name__ == "__main__":

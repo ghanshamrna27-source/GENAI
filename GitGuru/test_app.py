@@ -1,6 +1,7 @@
 """
 test_app.py
-Unit and integration tests for GitGuru FastAPI endpoints, smart search, and data analysis.
+Comprehensive automated test suite for GitGuru FastAPI endpoints, smart search,
+data analysis, and LLM chat service.
 """
 
 import sys
@@ -11,18 +12,26 @@ ROOT = Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from app.main import root, health, get_records, get_record, search_records, ask_question
-from app.models import QuestionRequest, HealthResponse, RecordSchema, QuestionResponse
+from app.main import root, health, get_records, get_record, search_records, ask_question, chat
+from app.models import (
+    QuestionRequest,
+    HealthResponse,
+    RecordSchema,
+    QuestionResponse,
+    ChatRequest,
+    ChatResponse,
+)
 from analysis.explore import explore_records
 from app.smart_search import rank_records, SmartSearcher
+from app.llm import generate_chat_response, parse_llm_json
 
 
 def test_root():
     res = root()
     assert "message" in res
     assert res["version"] == "1.0.0"
-    assert "health" in res["endpoints"]
-    print("✓ root() endpoint passed")
+    assert "chat" in res["endpoints"]
+    print("✓ root() endpoint passed (includes /chat)")
 
 
 def test_health():
@@ -83,6 +92,44 @@ def test_ask_questions():
     print(f"✓ ask_question() passed: matched='{res.matched_record.title}', asker={res.asker}")
 
 
+def test_chat_endpoint():
+    payload = ChatRequest(
+        message="How do I create and switch to a new Git branch?",
+        version="v2"
+    )
+    res = chat(payload)
+    assert isinstance(res, ChatResponse)
+    assert len(res.answer) > 10
+    assert res.confidence in ("high", "medium", "low")
+    assert len(res.follow_up) > 5
+    print(f"✓ POST /chat passed:")
+    print(f"   Answer:     {res.answer[:70]}...")
+    print(f"   Confidence: {res.confidence}")
+    print(f"   Follow-up:  {res.follow_up}")
+
+
+def test_chat_unanswerable_q6():
+    payload = ChatRequest(
+        message="How do I recover a deleted branch from 6 months ago if my local hard drive was completely formatted, zeroed out, and the code was never pushed to any remote repository?",
+        version="v2"
+    )
+    res = chat(payload)
+    assert isinstance(res, ChatResponse)
+    assert res.confidence == "low"
+    assert "cannot" in res.answer.lower() or "unrecoverable" in res.answer.lower()
+    print(f"✓ POST /chat (Q6 boundary test) passed: confidence='{res.confidence}', properly recognized as unrecoverable.")
+
+
+def test_parse_llm_json():
+    # Test valid JSON with markdown fence
+    raw = "```json\n{\"answer\": \"Use git clone\", \"confidence\": \"high\", \"follow_up\": \"Run git status\"}\n```"
+    parsed = parse_llm_json(raw)
+    assert parsed["answer"] == "Use git clone"
+    assert parsed["confidence"] == "high"
+    assert parsed["follow_up"] == "Run git status"
+    print("✓ parse_llm_json() correctly stripped markdown fences and extracted JSON")
+
+
 def test_smart_search_class():
     searcher = SmartSearcher()
     ranked = searcher.search("clone repository", limit=3)
@@ -97,10 +144,7 @@ def test_analysis_explore():
     assert "fact_1" in insights and "Git" in insights["fact_1"]
     assert "fact_2" in insights and "words" in insights["fact_2"]
     assert "fact_3" in insights and "keywords" in insights["fact_3"]
-    print("✓ explore_records() passed:")
-    print("   Fact 1:", insights["fact_1"])
-    print("   Fact 2:", insights["fact_2"])
-    print("   Fact 3:", insights["fact_3"])
+    print("✓ explore_records() passed 3 facts with pandas")
 
 
 def run_all():
@@ -113,6 +157,9 @@ def run_all():
     test_get_record_by_id()
     test_search()
     test_ask_questions()
+    test_chat_endpoint()
+    test_chat_unanswerable_q6()
+    test_parse_llm_json()
     test_smart_search_class()
     test_analysis_explore()
     print("=" * 65)

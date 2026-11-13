@@ -1,0 +1,21 @@
+TASK: GIT TROUBLESHOOTING & DIRECT RESOLUTION (Prompt V1 - Direct)
+
+You are tasked with diagnosing and providing an immediate, actionable solution for the following Git/GitHub situation.
+
+INSTRUCTIONS:
+1. Identify the root cause of the issue or the core command requested.
+2. Provide the immediate command(s) needed to resolve or perform the operation.
+3. Keep the answer direct and focused on resolution.
+4. Assess confidence: "high" if standard Git workflow, "medium" if dependent on user setup, "low" if unanswerable or missing prerequisites.
+5. Provide a follow-up recommending the next verification command (e.g. `git status` or `git log`).
+
+USER QUERY:
+{query}
+
+Format your response strictly as JSON:
+{{
+  "answer": "<direct resolution steps and commands>",
+  "confidence": "<high|medium|low>",
+  "follow_up": "<next verification step or command>"
+}}
+
