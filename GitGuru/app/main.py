@@ -1,12 +1,13 @@
 """
 app/main.py
 FastAPI Web API service for GitGuru — Git & GitHub Learning Assistant.
-Provides endpoints for health checks, records retrieval, smart TF-IDF search,
-learner question answering, and LLM-powered chat.
+Provides endpoints for health checks, records retrieval, keyword/TF-IDF search,
+persistent Chroma semantic search over document chunks, learner question answering,
+and LLM-powered chat.
 """
 
 from typing import List, Optional
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.models import (
@@ -16,10 +17,12 @@ from app.models import (
     HealthResponse,
     ChatRequest,
     ChatResponse,
+    SemanticSearchResult,
 )
 from app.records import load_records, get_by_id
 from app.smart_search import rank_records
 from app.llm import generate_chat_response
+from app.vectorstore import query_semantic
 
 app = FastAPI(
     title="GitGuru API",
@@ -49,6 +52,7 @@ def root():
             "list_records": "GET /records?limit=",
             "get_record_by_id": "GET /records/{id}",
             "smart_search": "GET /search?q=",
+            "semantic_search": "GET /search/semantic?q=",
             "ask_question": "POST /questions",
             "chat": "POST /chat",
         },
@@ -106,6 +110,19 @@ def search_records(q: str = "", limit: Optional[int] = 10):
     limit_val = limit if isinstance(limit, int) else None
     ranked = rank_records(query=q, limit=limit_val, min_score=0.0)
     return ranked
+
+
+@app.get("/search/semantic", response_model=List[SemanticSearchResult], tags=["Search"])
+def search_semantic(
+    q: str = Query(..., min_length=1, description="Semantic search query"),
+    limit: Optional[int] = Query(default=5, ge=1, le=20, description="Max results to return"),
+):
+    """
+    Semantic search over document chunks in persistent Chroma collection.
+    Ranks chunks using dense vector embeddings and returns source, page, and title metadata.
+    """
+    limit_val = limit if isinstance(limit, int) else 5
+    return query_semantic(query=q, limit=limit_val)
 
 
 @app.post("/questions", response_model=QuestionResponse, status_code=status.HTTP_200_OK, tags=["Q&A"])

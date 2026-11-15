@@ -76,3 +76,14 @@ class ChatResponse(BaseModel):
     follow_up: str = Field(..., description="Recommended follow-up command or proactive question")
     provider: Optional[str] = Field(None, description="The backend provider that handled the request")
     model: Optional[str] = Field(None, description="The model used to generate the response")
+
+
+class SemanticSearchResult(BaseModel):
+    chunk_id: str = Field(..., description="Unique chunk identifier")
+    text: str = Field(..., description="The chunk text segment")
+    title: str = Field(..., description="Document title from source")
+    source: str = Field(..., description="Official documentation URL or source path")
+    page: int = Field(..., description="Page or document catalog ID")
+    category: str = Field(..., description="Domain category")
+    similarity_score: float = Field(..., description="Dense embedding cosine similarity score (0.0 to 1.0)")
+    distance: float = Field(..., description="Cosine distance metric (1.0 - similarity)")

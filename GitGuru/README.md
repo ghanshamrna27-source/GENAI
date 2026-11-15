@@ -19,8 +19,16 @@ GitGuru is an intelligent assistant designed to help beginners and developers le
   - `GET /records?limit=`: List Git & GitHub records with optional limit parameter
   - `GET /records/{id}`: Look up record by ID (with 404 for missing records)
   - `GET /search?q=`: Smart search ranked by TF-IDF + Cosine Similarity
+  - `GET /search/semantic?q=`: Dense semantic search over Chroma vectorstore returning source, page, and title
   - `POST /questions`: Ask questions and receive relevant answers from the knowledge base
   - `POST /chat`: LLM-powered chat (Groq / Gemini) returning structured JSON (`answer`, `confidence`, `follow_up`)
+- **Document Chunking (`app/chunking.py`):**
+  - Splits documentation into coherent chunks while preserving `source`, `page`, and `title` metadata
+- **Vector Embeddings & Semantic Search (`app/embed.py`):**
+  - Computes 384-dimensional dense semantic vectors using `all-MiniLM-L6-v2` ONNX model
+  - Evaluates semantic search hits across the 10 real user scenarios
+- **Chroma Persistent VectorStore (`app/vectorstore.py`):**
+  - Indexes all document chunks into a persistent collection (`gitguru_chunks`)
 - **LLM Provider Wrapper (`app/llm.py`):**
   - Connects to Groq (`llama-3.3-70b-versatile`) and Google Gemini (`gemini-1.5-flash`)
   - Includes offline grounded TF-IDF fallback for test and CI environments
@@ -115,6 +123,26 @@ Invoke-RestMethod -Uri "http://127.0.0.1:8000/search?q=resolve+merge+conflict" -
 ```
 Returns records ranked in descending order of similarity score.
 
+#### Semantic Vector Search over Chroma Chunks (GET /search/semantic)
+```powershell
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/search/semantic?q=resolve+merge+conflict&limit=3" -Method Get
+```
+Returns top semantic chunks with source, page, and title metadata:
+```json
+[
+  {
+    "chunk_id": "doc_011_chunk_01",
+    "title": "Resolve Merge Conflicts",
+    "source": "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/addressing-merge-conflicts/resolving-a-merge-conflict-using-the-command-line",
+    "page": 11,
+    "category": "Troubleshooting",
+    "similarity_score": 0.8081,
+    "distance": 0.1919,
+    "text": "Topic: Resolve Merge Conflicts | Domain: Troubleshooting | Primary Keyword: conflict. Question: How do I resolve a merge conflict in Git? Explanation & Usage: Open conflicted files..."
+  }
+]
+```
+
 #### Ask a Question (POST /questions)
 ```powershell
 $body = @{
@@ -173,9 +201,28 @@ python -m app.smart_search "how to merge branches"
 
 ---
 
-### 6. Run Automated Test Suite
+### 6. Run Document Chunking & Semantic Search CLI
 
-Run the full end-to-end test suite:
+Run document chunking and inspect metadata:
+```powershell
+python -m app.chunking
+```
+
+Run dense semantic search across the 10 questions:
+```powershell
+python -m app.embed
+```
+
+Query the persistent Chroma vectorstore from CLI:
+```powershell
+python -m app.vectorstore "how to resolve merge conflict"
+```
+
+---
+
+### 7. Run Automated Test Suite
+
+Run the full end-to-end test suite (all 13 test suites):
 
 ```powershell
 python test_app.py
@@ -183,7 +230,7 @@ python test_app.py
 
 ---
 
-### 7. Run 10-Question Evaluation Benchmark
+### 8. Run 10-Question Evaluation Benchmark
 ```powershell
 python eval/run_eval.py
 ```
@@ -191,6 +238,7 @@ python eval/run_eval.py
 - **Documentation & LLM Architecture:** See [`docs/how_llms_work.md`](docs/how_llms_work.md)
 - **Evaluation Questions Detail:** See [`docs/questions.md`](docs/questions.md) and [`eval/questions.json`](eval/questions.json)
 - **Prompt Version Comparison Report:** See [`eval/prompt_compare.md`](eval/prompt_compare.md)
+- **Semantic Search Retrieval Hits Report:** See [`eval/search_results.md`](eval/search_results.md)
 
 ---
 
@@ -203,15 +251,19 @@ GitGuru/
 │   └── explore.py            # S2: pandas analysis printing 3 facts
 ├── app/
 │   ├── __init__.py
+│   ├── chunking.py           # S1: Document chunker preserving source, page, title
 │   ├── cli.py                # Interactive CLI menu
+│   ├── embed.py              # S1: 384-dim dense embedding & semantic search engine
 │   ├── fetch.py              # Documentation scraper
 │   ├── ingest.py             # HTML parser and record generator
 │   ├── llm.py                # LLM provider wrapper (Groq / Gemini / Grounded Fallback)
-│   ├── main.py               # FastAPI service (health, records, search, questions, chat)
+│   ├── main.py               # FastAPI service (health, records, search, semantic search, questions, chat)
 │   ├── models.py             # Pydantic schemas and dataclasses
 │   ├── records.py            # Record loading and persistence utilities
-│   └── smart_search.py       # TF-IDF + Cosine similarity search ranker
+│   ├── smart_search.py       # TF-IDF + Cosine similarity search ranker
+│   └── vectorstore.py        # S2: Persistent Chroma vector collection indexer & searcher
 ├── data/
+│   ├── chroma_db/            # Persistent Chroma collection storage
 │   ├── records.json          # Curated knowledge base records
 │   ├── sample_records.py     # Fallback sample records
 │   └── raw/                  # Downloaded documentation files
@@ -221,7 +273,8 @@ GitGuru/
 ├── eval/
 │   ├── prompt_compare.md     # Side-by-side comparison of 2 prompt versions across 10 questions
 │   ├── questions.json        # Machine-readable evaluation dataset
-│   └── run_eval.py           # Automated benchmark runner for the 10 questions
+│   ├── run_eval.py           # Automated benchmark runner for the 10 questions
+│   └── search_results.md     # S1: Evaluation report of semantic search hits on 10 questions
 ├── prompts/
 │   ├── __init__.py           # Prompt loader and template formatter
 │   ├── system_prompt.txt     # GitGuru persona, rules, and JSON schema
@@ -229,6 +282,6 @@ GitGuru/
 │   └── task_concept_coach.txt   # Prompt V2: Structured grounded guidance
 ├── .env.example              # Example environment configuration (Groq & Gemini keys)
 ├── requirements.txt          # Project dependencies
-├── test_app.py               # Automated test suite
+├── test_app.py               # Automated test suite (13 test suites)
 └── README.md                 # Documentation and 'How to run' guide
 ```
