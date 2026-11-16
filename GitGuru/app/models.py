@@ -87,3 +87,25 @@ class SemanticSearchResult(BaseModel):
     category: str = Field(..., description="Domain category")
     similarity_score: float = Field(..., description="Dense embedding cosine similarity score (0.0 to 1.0)")
     distance: float = Field(..., description="Cosine distance metric (1.0 - similarity)")
+
+
+class Citation(BaseModel):
+    source: str = Field(..., description="Official documentation URL or source path")
+    page: int = Field(..., description="Document page or catalog ID")
+    title: str = Field(..., description="Document title from source")
+    chunk_id: str = Field(..., description="Unique chunk identifier")
+
+
+class AskRequest(BaseModel):
+    question: str = Field(..., min_length=2, description="The Git or GitHub question to answer")
+    top_k: Optional[int] = Field(default=3, ge=1, le=10, description="Number of context chunks to retrieve")
+
+
+class AskResponse(BaseModel):
+    question: str = Field(..., description="The original question asked")
+    answer: str = Field(..., description="The grounded answer with citations or refusal statement")
+    citations: List[Citation] = Field(default=[], description="List of document citations supporting the answer")
+    retrieved_chunks: List[SemanticSearchResult] = Field(default=[], description="The retrieved context chunks")
+    confidence: str = Field(..., description="Confidence rating: 'high', 'medium', or 'low'")
+    is_grounded: bool = Field(..., description="Whether the response is strictly grounded in retrieved chunks")
+

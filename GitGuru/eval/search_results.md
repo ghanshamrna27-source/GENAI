@@ -190,3 +190,4 @@ Every chunk in the index strictly preserves its metadata: **`source`**, **`page`
 | **Out-of-Scope Boundary Rejection (Q6)** | **PASSED (Score $\le 0.45$)** | Score $< 0.50$ | **PASSED** |
 | **Metadata Integrity (`source`, `page`, `title`)** | **100% (48 / 48 Chunks)** | 100% | **PASSED** |
 | **Average Query Latency** | **< 15ms** | $< 100\text{ms}$ | **PASSED** |
+

@@ -1,0 +1,369 @@
+{
+  "dataset_size": 15,
+  "winner": "Config B (Tuned / Winner)",
+  "markdown_table": "| Metric | Config A (Baseline: 140/25, k=2) | Config B (Tuned: 250/50, k=3) | Delta / Winner |\n|---|---|---|---|\n| Chunk Size (chars) | 140 chars | 250 chars | +110 chars |\n| Chunk Overlap (chars) | 25 chars | 50 chars | +25 chars |\n| Top-k Retrieval | 2 chunks | 3 chunks | +1 chunk |\n| Total Chunks in Index | 78 | 44 | -34 |\n| Grounding / Key Terms Recall | 68.3% | 96.7% | +28.4% (Config B) |\n| Retrieval Hit Rate (Hit@k) | 100.0% | 100.0% | 100.0% Parity (Perfect) |\n| Citation Precision | 100.0% | 71.1% | -28.9% |\n| Q6 & Q15 Refusal Accuracy | 100.0% | 100.0% | 100.0% Parity (Both safe) |\n| Average Latency (ms) | 3103.9 ms | 1686.3 ms | -1417.6 ms (Config B faster) |\n| Composite Benchmark Score | 85.8% | 98.5% | +12.7% (WINNER: CONFIG B) |",
+  "configs": {
+    "Config A (Baseline)": {
+      "config_name": "Config A (Baseline)",
+      "description": "Baseline: Small Chunks (140 chars), Minimal Overlap (25 chars), Top-2 Retrieval",
+      "chunk_size": 140,
+      "chunk_overlap": 25,
+      "top_k": 2,
+      "total_chunks": 78,
+      "avg_grounding_recall": 68.3,
+      "retrieval_hit_rate": 100.0,
+      "avg_citation_precision": 100.0,
+      "unanswerable_refusal_accuracy": 100.0,
+      "avg_latency_ms": 3103.92,
+      "composite_score": 85.8,
+      "rows": [
+        {
+          "id": "Q01",
+          "question": "What is Git, and how is it different from GitHub?",
+          "is_answerable": true,
+          "refusal_accuracy": 1.0,
+          "grounding_recall": 0.75,
+          "hit_rate": 1.0,
+          "citation_precision": 1.0,
+          "latency_ms": 6966.277299972717,
+          "citations_count": 1
+        },
+        {
+          "id": "Q02",
+          "question": "How do I clone an existing remote repository onto my local machine?",
+          "is_answerable": true,
+          "refusal_accuracy": 1.0,
+          "grounding_recall": 0.25,
+          "hit_rate": 1.0,
+          "citation_precision": 1.0,
+          "latency_ms": 2921.7895999900065,
+          "citations_count": 1
+        },
+        {
+          "id": "Q03",
+          "question": "How do I stage changes and make a commit with a descriptive message?",
+          "is_answerable": true,
+          "refusal_accuracy": 1.0,
+          "grounding_recall": 0.5,
+          "hit_rate": 1.0,
+          "citation_precision": 1.0,
+          "latency_ms": 2955.118600046262,
+          "citations_count": 2
+        },
+        {
+          "id": "Q04",
+          "question": "How do I create a new branch, switch to it, and merge changes back into main?",
+          "is_answerable": true,
+          "refusal_accuracy": 1.0,
+          "grounding_recall": 1.0,
+          "hit_rate": 1.0,
+          "citation_precision": 1.0,
+          "latency_ms": 3141.60739997169,
+          "citations_count": 2
+        },
+        {
+          "id": "Q05",
+          "question": "How do I push local commits to a remote GitHub repository using git push?",
+          "is_answerable": true,
+          "refusal_accuracy": 1.0,
+          "grounding_recall": 0.75,
+          "hit_rate": 1.0,
+          "citation_precision": 1.0,
+          "latency_ms": 2882.5809999834746,
+          "citations_count": 1
+        },
+        {
+          "id": "Q06",
+          "question": "How do I recover a deleted branch from 6 months ago if my local hard drive was completely formatted, zeroed out, and the code was never pushed to any remote repository?",
+          "is_answerable": false,
+          "refusal_accuracy": 1.0,
+          "grounding_recall": 1.0,
+          "hit_rate": 1.0,
+          "citation_precision": 1.0,
+          "latency_ms": 2732.5716000050306,
+          "citations_count": 0
+        },
+        {
+          "id": "Q07",
+          "question": "How do I resolve a merge conflict in Git when two branches edit the same lines?",
+          "is_answerable": true,
+          "refusal_accuracy": 1.0,
+          "grounding_recall": 0.75,
+          "hit_rate": 1.0,
+          "citation_precision": 1.0,
+          "latency_ms": 2780.7520999922417,
+          "citations_count": 1
+        },
+        {
+          "id": "Q08",
+          "question": "How do I undo a commit or discard uncommitted changes using git reset or revert?",
+          "is_answerable": true,
+          "refusal_accuracy": 1.0,
+          "grounding_recall": 0.75,
+          "hit_rate": 1.0,
+          "citation_precision": 1.0,
+          "latency_ms": 2790.1214999728836,
+          "citations_count": 1
+        },
+        {
+          "id": "Q09",
+          "question": "How do I temporarily save uncommitted work without committing so I can switch branches?",
+          "is_answerable": true,
+          "refusal_accuracy": 1.0,
+          "grounding_recall": 0.75,
+          "hit_rate": 1.0,
+          "citation_precision": 1.0,
+          "latency_ms": 2756.0993999941275,
+          "citations_count": 1
+        },
+        {
+          "id": "Q10",
+          "question": "How do I set up and configure SSH key authentication for pushing to GitHub securely?",
+          "is_answerable": true,
+          "refusal_accuracy": 1.0,
+          "grounding_recall": 0.75,
+          "hit_rate": 1.0,
+          "citation_precision": 1.0,
+          "latency_ms": 2805.8612000313587,
+          "citations_count": 1
+        },
+        {
+          "id": "Q11",
+          "question": "What is git rebase and when should I use it instead of merge?",
+          "is_answerable": true,
+          "refusal_accuracy": 1.0,
+          "grounding_recall": 0.25,
+          "hit_rate": 1.0,
+          "citation_precision": 1.0,
+          "latency_ms": 2814.663300057873,
+          "citations_count": 1
+        },
+        {
+          "id": "Q12",
+          "question": "What are GitHub Actions and how do I automate tests and workflows?",
+          "is_answerable": true,
+          "refusal_accuracy": 1.0,
+          "grounding_recall": 0.75,
+          "hit_rate": 1.0,
+          "citation_precision": 1.0,
+          "latency_ms": 2731.7187000298873,
+          "citations_count": 1
+        },
+        {
+          "id": "Q13",
+          "question": "How do I create release tags in Git and publish them to GitHub?",
+          "is_answerable": true,
+          "refusal_accuracy": 1.0,
+          "grounding_recall": 0.75,
+          "hit_rate": 1.0,
+          "citation_precision": 1.0,
+          "latency_ms": 2871.9523000181653,
+          "citations_count": 1
+        },
+        {
+          "id": "Q14",
+          "question": "How do I check the status of my working directory and staging area with git status?",
+          "is_answerable": true,
+          "refusal_accuracy": 1.0,
+          "grounding_recall": 0.25,
+          "hit_rate": 1.0,
+          "citation_precision": 1.0,
+          "latency_ms": 2705.904000031296,
+          "citations_count": 1
+        },
+        {
+          "id": "Q15",
+          "question": "How do I configure Apache Subversion (SVN) multi-master replication in GitGuru?",
+          "is_answerable": false,
+          "refusal_accuracy": 1.0,
+          "grounding_recall": 1.0,
+          "hit_rate": 1.0,
+          "citation_precision": 1.0,
+          "latency_ms": 2701.741500000935,
+          "citations_count": 0
+        }
+      ]
+    },
+    "Config B (Tuned / Winner)": {
+      "config_name": "Config B (Tuned / Winner)",
+      "description": "Tuned: Rich Chunks (250 chars), Balanced Overlap (50 chars), Top-3 Retrieval",
+      "chunk_size": 250,
+      "chunk_overlap": 50,
+      "top_k": 3,
+      "total_chunks": 44,
+      "avg_grounding_recall": 96.7,
+      "retrieval_hit_rate": 100.0,
+      "avg_citation_precision": 71.1,
+      "unanswerable_refusal_accuracy": 100.0,
+      "avg_latency_ms": 1686.29,
+      "composite_score": 98.5,
+      "rows": [
+        {
+          "id": "Q01",
+          "question": "What is Git, and how is it different from GitHub?",
+          "is_answerable": true,
+          "refusal_accuracy": 1.0,
+          "grounding_recall": 1.0,
+          "hit_rate": 1.0,
+          "citation_precision": 1.0,
+          "latency_ms": 1724.880399997346,
+          "citations_count": 2
+        },
+        {
+          "id": "Q02",
+          "question": "How do I clone an existing remote repository onto my local machine?",
+          "is_answerable": true,
+          "refusal_accuracy": 1.0,
+          "grounding_recall": 1.0,
+          "hit_rate": 1.0,
+          "citation_precision": 0.5,
+          "latency_ms": 1676.4391000033356,
+          "citations_count": 2
+        },
+        {
+          "id": "Q03",
+          "question": "How do I stage changes and make a commit with a descriptive message?",
+          "is_answerable": true,
+          "refusal_accuracy": 1.0,
+          "grounding_recall": 1.0,
+          "hit_rate": 1.0,
+          "citation_precision": 0.6666666666666666,
+          "latency_ms": 1764.060600020457,
+          "citations_count": 3
+        },
+        {
+          "id": "Q04",
+          "question": "How do I create a new branch, switch to it, and merge changes back into main?",
+          "is_answerable": true,
+          "refusal_accuracy": 1.0,
+          "grounding_recall": 1.0,
+          "hit_rate": 1.0,
+          "citation_precision": 1.0,
+          "latency_ms": 1783.7450000224635,
+          "citations_count": 2
+        },
+        {
+          "id": "Q05",
+          "question": "How do I push local commits to a remote GitHub repository using git push?",
+          "is_answerable": true,
+          "refusal_accuracy": 1.0,
+          "grounding_recall": 1.0,
+          "hit_rate": 1.0,
+          "citation_precision": 0.5,
+          "latency_ms": 1747.1509000170045,
+          "citations_count": 2
+        },
+        {
+          "id": "Q06",
+          "question": "How do I recover a deleted branch from 6 months ago if my local hard drive was completely formatted, zeroed out, and the code was never pushed to any remote repository?",
+          "is_answerable": false,
+          "refusal_accuracy": 1.0,
+          "grounding_recall": 1.0,
+          "hit_rate": 1.0,
+          "citation_precision": 1.0,
+          "latency_ms": 1697.0098000019789,
+          "citations_count": 0
+        },
+        {
+          "id": "Q07",
+          "question": "How do I resolve a merge conflict in Git when two branches edit the same lines?",
+          "is_answerable": true,
+          "refusal_accuracy": 1.0,
+          "grounding_recall": 0.75,
+          "hit_rate": 1.0,
+          "citation_precision": 0.5,
+          "latency_ms": 1722.874299972318,
+          "citations_count": 2
+        },
+        {
+          "id": "Q08",
+          "question": "How do I undo a commit or discard uncommitted changes using git reset or revert?",
+          "is_answerable": true,
+          "refusal_accuracy": 1.0,
+          "grounding_recall": 1.0,
+          "hit_rate": 1.0,
+          "citation_precision": 1.0,
+          "latency_ms": 1725.303500017617,
+          "citations_count": 1
+        },
+        {
+          "id": "Q09",
+          "question": "How do I temporarily save uncommitted work without committing so I can switch branches?",
+          "is_answerable": true,
+          "refusal_accuracy": 1.0,
+          "grounding_recall": 0.75,
+          "hit_rate": 1.0,
+          "citation_precision": 0.5,
+          "latency_ms": 1635.5852999840863,
+          "citations_count": 2
+        },
+        {
+          "id": "Q10",
+          "question": "How do I set up and configure SSH key authentication for pushing to GitHub securely?",
+          "is_answerable": true,
+          "refusal_accuracy": 1.0,
+          "grounding_recall": 1.0,
+          "hit_rate": 1.0,
+          "citation_precision": 1.0,
+          "latency_ms": 1638.8666999991983,
+          "citations_count": 1
+        },
+        {
+          "id": "Q11",
+          "question": "What is git rebase and when should I use it instead of merge?",
+          "is_answerable": true,
+          "refusal_accuracy": 1.0,
+          "grounding_recall": 1.0,
+          "hit_rate": 1.0,
+          "citation_precision": 0.5,
+          "latency_ms": 1620.2575999777764,
+          "citations_count": 2
+        },
+        {
+          "id": "Q12",
+          "question": "What are GitHub Actions and how do I automate tests and workflows?",
+          "is_answerable": true,
+          "refusal_accuracy": 1.0,
+          "grounding_recall": 1.0,
+          "hit_rate": 1.0,
+          "citation_precision": 0.5,
+          "latency_ms": 1667.7774999989197,
+          "citations_count": 2
+        },
+        {
+          "id": "Q13",
+          "question": "How do I create release tags in Git and publish them to GitHub?",
+          "is_answerable": true,
+          "refusal_accuracy": 1.0,
+          "grounding_recall": 1.0,
+          "hit_rate": 1.0,
+          "citation_precision": 0.5,
+          "latency_ms": 1622.9075000155717,
+          "citations_count": 2
+        },
+        {
+          "id": "Q14",
+          "question": "How do I check the status of my working directory and staging area with git status?",
+          "is_answerable": true,
+          "refusal_accuracy": 1.0,
+          "grounding_recall": 1.0,
+          "hit_rate": 1.0,
+          "citation_precision": 0.5,
+          "latency_ms": 1651.2274999986403,
+          "citations_count": 2
+        },
+        {
+          "id": "Q15",
+          "question": "How do I configure Apache Subversion (SVN) multi-master replication in GitGuru?",
+          "is_answerable": false,
+          "refusal_accuracy": 1.0,
+          "grounding_recall": 1.0,
+          "hit_rate": 1.0,
+          "citation_precision": 1.0,
+          "latency_ms": 1616.2581999669783,
+          "citations_count": 0
+        }
+      ]
+    }
+  }
+}

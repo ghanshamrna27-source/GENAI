@@ -18,11 +18,15 @@ from app.models import (
     ChatRequest,
     ChatResponse,
     SemanticSearchResult,
+    AskRequest,
+    AskResponse,
+    Citation,
 )
 from app.records import load_records, get_by_id
 from app.smart_search import rank_records
 from app.llm import generate_chat_response
 from app.vectorstore import query_semantic
+from app.rag import answer_question
 
 app = FastAPI(
     title="GitGuru API",
@@ -55,6 +59,7 @@ def root():
             "semantic_search": "GET /search/semantic?q=",
             "ask_question": "POST /questions",
             "chat": "POST /chat",
+            "rag_ask": "POST /ask",
         },
     }
 
@@ -177,6 +182,17 @@ def chat(payload: ChatRequest):
         provider=payload.provider,
     )
     return ChatResponse(**response_data)
+
+
+@app.post("/ask", response_model=AskResponse, status_code=status.HTTP_200_OK, tags=["RAG"])
+def ask(payload: AskRequest):
+    """
+    RAG Question Answering Endpoint:
+    Answers Git and GitHub questions strictly grounded in retrieved documentation chunks with citations.
+    Enforces strict hallucination guardrails: outputs 'I don't know' for unanswerable questions (Q6).
+    """
+    response_data = answer_question(question=payload.question, top_k=payload.top_k or 3)
+    return AskResponse(**response_data)
 
 
 if __name__ == "__main__":

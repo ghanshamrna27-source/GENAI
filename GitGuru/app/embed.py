@@ -183,3 +183,4 @@ if __name__ == "__main__":
             print(f"        Preview: {hit['text'][:90]}...")
         print()
     print("=" * 70)
+

@@ -1,0 +1,184 @@
+[
+  {
+    "id": "Q01",
+    "question": "What is Git, and how is it different from GitHub?",
+    "category": "Git & GitHub Fundamentals",
+    "expected_answerable": true,
+    "expected_record_ids": [1, 2],
+    "expected_titles": ["About Git", "About GitHub"],
+    "expected_sources": [
+      "https://git-scm.com/doc",
+      "https://docs.github.com/en/get-started"
+    ],
+    "key_terms": ["distributed version control", "cloud-based", "hosting", "repositories"]
+  },
+  {
+    "id": "Q02",
+    "question": "How do I clone an existing remote repository onto my local machine?",
+    "category": "Repository Operations",
+    "expected_answerable": true,
+    "expected_record_ids": [4],
+    "expected_titles": ["Clone Repository (git clone)"],
+    "expected_sources": [
+      "https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository"
+    ],
+    "key_terms": ["git clone", "remote repository", "download", "local machine"]
+  },
+  {
+    "id": "Q03",
+    "question": "How do I stage changes and make a commit with a descriptive message?",
+    "category": "Staging & Commits",
+    "expected_answerable": true,
+    "expected_record_ids": [5, 6],
+    "expected_titles": ["Stage Changes (git add)", "Commit Changes (git commit)"],
+    "expected_sources": [
+      "https://git-scm.com/docs/git-add",
+      "https://git-scm.com/docs/git-commit"
+    ],
+    "key_terms": ["git add", "git commit", "staged snapshot", "message"]
+  },
+  {
+    "id": "Q04",
+    "question": "How do I create a new branch, switch to it, and merge changes back into main?",
+    "category": "Git Branching",
+    "expected_answerable": true,
+    "expected_record_ids": [9, 10],
+    "expected_titles": [
+      "Create and Switch Branches (git branch & git switch)",
+      "Merge Branches (git merge)"
+    ],
+    "expected_sources": [
+      "https://git-scm.com/docs/git-branch",
+      "https://git-scm.com/docs/git-merge"
+    ],
+    "key_terms": ["git branch", "git switch", "git merge", "branch-name"]
+  },
+  {
+    "id": "Q05",
+    "question": "How do I push local commits to a remote GitHub repository using git push?",
+    "category": "Remote & GitHub Collaboration",
+    "expected_answerable": true,
+    "expected_record_ids": [14],
+    "expected_titles": ["Push Commits to Remote (git push)"],
+    "expected_sources": [
+      "https://git-scm.com/docs/git-push"
+    ],
+    "key_terms": ["git push", "origin", "upstream", "remote"]
+  },
+  {
+    "id": "Q06",
+    "question": "How do I recover a deleted branch from 6 months ago if my local hard drive was completely formatted, zeroed out, and the code was never pushed to any remote repository?",
+    "category": "Unanswerable / Out of Scope",
+    "expected_answerable": false,
+    "expected_record_ids": [],
+    "expected_titles": [],
+    "expected_sources": [],
+    "key_terms": ["I don't know", "unrecoverable", "formatted", "zeroed"]
+  },
+  {
+    "id": "Q07",
+    "question": "How do I resolve a merge conflict in Git when two branches edit the same lines?",
+    "category": "Troubleshooting & Conflicts",
+    "expected_answerable": true,
+    "expected_record_ids": [11],
+    "expected_titles": ["Resolve Merge Conflicts"],
+    "expected_sources": [
+      "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/addressing-merge-conflicts/resolving-a-merge-conflict-using-the-command-line"
+    ],
+    "key_terms": ["conflict markers", "git add", "resolve", "merge conflict"]
+  },
+  {
+    "id": "Q08",
+    "question": "How do I undo a commit or discard uncommitted changes using git reset or revert?",
+    "category": "Troubleshooting & Undo",
+    "expected_answerable": true,
+    "expected_record_ids": [12],
+    "expected_titles": ["Undo Changes and Commits (git reset & git revert)"],
+    "expected_sources": [
+      "https://git-scm.com/docs/git-revert"
+    ],
+    "key_terms": ["git revert", "git reset", "git restore", "undo"]
+  },
+  {
+    "id": "Q09",
+    "question": "How do I temporarily save uncommitted work without committing so I can switch branches?",
+    "category": "Working State & Stashing",
+    "expected_answerable": true,
+    "expected_record_ids": [13],
+    "expected_titles": ["Stash Working Changes (git stash)"],
+    "expected_sources": [
+      "https://git-scm.com/docs/git-stash"
+    ],
+    "key_terms": ["git stash", "stash pop", "uncommitted work", "stack"]
+  },
+  {
+    "id": "Q10",
+    "question": "How do I set up and configure SSH key authentication for pushing to GitHub securely?",
+    "category": "GitHub Authentication",
+    "expected_answerable": true,
+    "expected_record_ids": [17],
+    "expected_titles": ["SSH Key Authentication for GitHub"],
+    "expected_sources": [
+      "https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent"
+    ],
+    "key_terms": ["ssh-keygen", "ed25519", "ssh-agent", "public key"]
+  },
+  {
+    "id": "Q11",
+    "question": "What is git rebase and when should I use it instead of merge?",
+    "category": "Git Branching & History",
+    "expected_answerable": true,
+    "expected_record_ids": [19],
+    "expected_titles": ["Git Rebase (git rebase)"],
+    "expected_sources": [
+      "https://git-scm.com/docs/git-rebase"
+    ],
+    "key_terms": ["git rebase", "linear", "base commit", "public shared branch"]
+  },
+  {
+    "id": "Q12",
+    "question": "What are GitHub Actions and how do I automate tests and workflows?",
+    "category": "GitHub Actions & Automation",
+    "expected_answerable": true,
+    "expected_record_ids": [18],
+    "expected_titles": ["GitHub Actions CI/CD"],
+    "expected_sources": [
+      "https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions"
+    ],
+    "key_terms": ["GitHub Actions", "CI/CD", "workflows", "automated tests"]
+  },
+  {
+    "id": "Q13",
+    "question": "How do I create release tags in Git and publish them to GitHub?",
+    "category": "Release Management",
+    "expected_answerable": true,
+    "expected_record_ids": [20],
+    "expected_titles": ["Release Tagging (git tag)"],
+    "expected_sources": [
+      "https://git-scm.com/docs/git-tag"
+    ],
+    "key_terms": ["git tag", "annotated", "--tags", "release"]
+  },
+  {
+    "id": "Q14",
+    "question": "How do I check the status of my working directory and staging area with git status?",
+    "category": "Repository Operations",
+    "expected_answerable": true,
+    "expected_record_ids": [7],
+    "expected_titles": ["Check Repository Status (git status)"],
+    "expected_sources": [
+      "https://git-scm.com/docs/git-status"
+    ],
+    "key_terms": ["git status", "staged", "untracked", "modified"]
+  },
+  {
+    "id": "Q15",
+    "question": "How do I configure Apache Subversion (SVN) multi-master replication in GitGuru?",
+    "category": "Unanswerable / Out of Scope",
+    "expected_answerable": false,
+    "expected_record_ids": [],
+    "expected_titles": [],
+    "expected_sources": [],
+    "key_terms": ["I don't know", "outside Git", "Subversion", "SVN"]
+  }
+]

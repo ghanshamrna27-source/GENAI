@@ -21,6 +21,7 @@ from app.main import (
     search_semantic,
     ask_question,
     chat,
+    ask,
 )
 from app.models import (
     QuestionRequest,
@@ -30,6 +31,9 @@ from app.models import (
     ChatRequest,
     ChatResponse,
     SemanticSearchResult,
+    AskRequest,
+    AskResponse,
+    Citation,
 )
 from analysis.explore import explore_records
 from app.smart_search import rank_records, SmartSearcher
@@ -37,6 +41,7 @@ from app.llm import generate_chat_response, parse_llm_json
 from app.chunking import chunk_all_documents, split_text_into_chunks
 from app.embed import embed_text, semantic_search
 from app.vectorstore import get_vectorstore, query_semantic
+from app.rag import answer_question
 
 
 def test_root():
@@ -45,7 +50,8 @@ def test_root():
     assert res["version"] == "1.0.0"
     assert "semantic_search" in res["endpoints"]
     assert "chat" in res["endpoints"]
-    print("✓ root() endpoint passed (includes /search/semantic and /chat)")
+    assert "rag_ask" in res["endpoints"]
+    print("✓ root() endpoint passed (includes /search/semantic, /chat, and /ask)")
 
 
 def test_health():
@@ -131,6 +137,49 @@ def test_chat_unanswerable_q6():
     print("✓ POST /chat Q6 boundary test passed: properly recognized unrecoverable data")
 
 
+def test_rag_ask_endpoint():
+    payload = AskRequest(
+        question="How do I clone an existing remote repository onto my local machine?",
+        top_k=3
+    )
+    res = ask(payload)
+    assert isinstance(res, AskResponse)
+    assert res.is_grounded is True
+    assert res.confidence in ("high", "medium")
+    assert len(res.citations) >= 1
+    top_cit = res.citations[0]
+    assert isinstance(top_cit, Citation)
+    assert "clone" in top_cit.title.lower()
+    assert top_cit.page == 4
+    assert top_cit.source.startswith("http")
+    assert "Sources & Citations" in res.answer
+    print(f"✓ POST /ask passed: answered with {len(res.citations)} citations (Top: '{top_cit.title}', Page {top_cit.page})")
+
+
+def test_rag_ask_q6_refusal():
+    payload = AskRequest(
+        question="How do I recover a deleted branch from 6 months ago if my local hard drive was completely formatted, zeroed out, and the code was never pushed to any remote repository?",
+        top_k=3
+    )
+    res = ask(payload)
+    assert isinstance(res, AskResponse)
+    # Strict Day 8 requirement: Must say "I don't know" for Q6!
+    assert "i don't know" in res.answer.lower()
+    assert res.is_grounded is False
+    assert res.confidence == "low"
+    assert len(res.citations) == 0
+    print("✓ POST /ask Q6 strict refusal passed: answered with 'I don't know' and 0 hallucinated citations")
+
+
+def test_rag_module_direct():
+    res = answer_question("What is git rebase and when should I use it instead of merge?", top_k=2)
+    assert res["is_grounded"] is True
+    assert "rebase" in res["answer"].lower()
+    assert len(res["citations"]) >= 1
+    assert any("rebase" in c["title"].lower() for c in res["citations"])
+    print(f"✓ app.rag.answer_question() passed: retrieved {len(res['citations'])} citations for git rebase")
+
+
 def test_chunking_metadata():
     chunks = chunk_all_documents()
     assert len(chunks) >= 40
@@ -189,7 +238,7 @@ def test_analysis_explore():
 
 def run_all():
     print("=" * 68)
-    print("       GitGuru Comprehensive Test Suite (S1 + S2 Complete)")
+    print("       GitGuru Comprehensive Test Suite (Day 8: RAG + Eval)")
     print("=" * 68)
     test_root()
     test_health()
@@ -199,13 +248,16 @@ def run_all():
     test_ask_questions()
     test_chat_endpoint()
     test_chat_unanswerable_q6()
+    test_rag_ask_endpoint()
+    test_rag_ask_q6_refusal()
+    test_rag_module_direct()
     test_chunking_metadata()
     test_embedding_and_semantic_search()
     test_vectorstore_and_endpoint()
     test_smart_search_class()
     test_analysis_explore()
     print("=" * 68)
-    print("       ALL 13 TEST SUITES PASSED SUCCESSFULLY! (100%)       ")
+    print("       ALL 16 TEST SUITES PASSED SUCCESSFULLY! (100%)       ")
     print("=" * 68)
 
 
