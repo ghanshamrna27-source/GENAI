@@ -272,6 +272,36 @@ def test_post_agent_endpoint():
     print("✓ POST /agent endpoint passed: verified LangGraph, Handwritten, and Approval multi-turn cycle")
 
 
+def test_streamlit_ui_and_feedback():
+    from ui.app import save_user_feedback, FEEDBACK_FILE
+    import json
+
+    ui_file = ROOT / "ui" / "app.py"
+    assert ui_file.exists(), "ui/app.py must exist"
+
+    # Test saving feedback
+    ok = save_user_feedback(
+        query="How do I clone a repository?",
+        answer="Use git clone <url>.",
+        rating="thumbs_up",
+        mode="RAG Search (/ask)",
+        citations_count=1,
+        thread_id="test_suite_thread",
+    )
+    assert ok is True
+    assert FEEDBACK_FILE.exists()
+    content = json.loads(FEEDBACK_FILE.read_text(encoding="utf-8"))
+    assert len(content) >= 1
+    assert any(c.get("rating") == "thumbs_up" for c in content)
+
+    # Test screenshot file exists
+    screenshot = ROOT / "docs" / "screenshots" / "ui_demo.png"
+    assert screenshot.exists(), "Screenshot must exist at docs/screenshots/ui_demo.png"
+    assert screenshot.stat().st_size > 1000
+
+    print("✓ ui/app.py passed: verified Streamlit UI module, feedback persistence, and UI screenshot")
+
+
 def test_chunking_metadata():
     chunks = chunk_all_documents()
     assert len(chunks) >= 40
@@ -330,7 +360,7 @@ def test_analysis_explore():
 
 def run_all():
     print("=" * 68)
-    print("       GitGuru Comprehensive Test Suite (Day 9: Agents & Tools)")
+    print("       GitGuru Comprehensive Test Suite (Checkpoint 2)")
     print("=" * 68)
     test_root()
     test_health()
@@ -347,13 +377,14 @@ def run_all():
     test_handwritten_agent_loop()
     test_langgraph_agent_memory_and_approval()
     test_post_agent_endpoint()
+    test_streamlit_ui_and_feedback()
     test_chunking_metadata()
     test_embedding_and_semantic_search()
     test_vectorstore_and_endpoint()
     test_smart_search_class()
     test_analysis_explore()
     print("=" * 68)
-    print("       ALL 20 TEST SUITES PASSED SUCCESSFULLY! (100%)       ")
+    print("       ALL 21 TEST SUITES PASSED SUCCESSFULLY! (100%)       ")
     print("=" * 68)
 
 

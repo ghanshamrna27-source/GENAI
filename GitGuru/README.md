@@ -14,6 +14,8 @@ GitGuru is an intelligent assistant designed to help beginners and developers le
 ---
 
 ## Features
+- **Streamlit Interactive UI (`ui/app.py`):**
+  - Checkpoint 2 interactive web app featuring multi-turn chat, expandable citations, thumbs up/down feedback persistence, and signature feature `{S}`
 - **FastAPI Web Service (`app/main.py`):**
   - `GET /health`: System health check and knowledge base stats
   - `GET /records?limit=`: List Git & GitHub records with optional limit parameter
@@ -96,7 +98,19 @@ The service will start at `http://127.0.0.1:8000`.
 
 ---
 
-### 3. Test API Endpoints
+### 3. Run the Streamlit Interactive UI (Live Demo)
+
+Start the Streamlit web application:
+
+```powershell
+streamlit run ui/app.py
+```
+
+Open [http://localhost:8501](http://localhost:8501) in your browser to explore the live chat UI, verifiable citations, thumbs up/down feedback, and the visual branch graph.
+
+---
+
+### 4. Test API Endpoints
 
 You can test the endpoints using PowerShell `Invoke-RestMethod` or `curl`:
 
@@ -454,6 +468,32 @@ To systematically evaluate retrieval and generation quality, GitGuru benchmarks 
 
 ---
 
+## Checkpoint 2: Streamlit Interactive UI & Live RAG Demo
+
+GitGuru includes a full-featured Streamlit web application ([`ui/app.py`](ui/app.py)) demonstrating the end-to-end RAG pipeline, verifiable citations, thumbs up/down user feedback, and GitGuru's signature feature `{S}`.
+
+### Live Demo Screenshot
+![GitGuru Streamlit UI Demo](docs/screenshots/ui_demo.png)
+
+### Key UI Capabilities
+1. **Dual Engine Mode Selector:**
+   - **RAG Search (`/ask`):** Answers Git & GitHub queries strictly grounded in retrieved documentation chunks with clickable citations.
+   - **LangGraph Agent (`/agent`):** Plans tools, preserves multi-turn session memory with `thread_id`, and halts before destructive commands to request human approval.
+2. **Verifiable Document Citations:**
+   - Expandable cards displaying document title, catalog page, source URL, chunk ID, and similarity score.
+3. **Persistent Thumbs Up / Down Feedback:**
+   - Users can rate responses with 👍 or 👎. Feedback is saved to [`data/feedback.json`](data/feedback.json) along with query, answer, timestamp, and mode.
+4. **Signature Feature `{S}` — Interactive Git Command Simulator & Visual Branch Graph:**
+   - **Live Branch Graph Visualizer:** Renders an interactive Mermaid branch diagram showing active commits, merges, and tags.
+   - **Command Sandbox & Risk Inspector:** Evaluates any Git command's risk level (🟢 Safe vs 🔴 Critical Destructive) with live simulated execution and an **Approve & Run** human confirmation step.
+5. **One-Click Live Demo Scenarios:**
+   - 📥 *Clone Repository* (`/ask` live demo)
+   - 🔀 *Merge Conflicts* (`/ask` live demo)
+   - 🛡️ *Formatted Disk Recovery* (Q6 anti-hallucination refusal test: strictly outputs *"I don't know"*)
+   - ⚠️ *Hard Reset* (LangGraph Human Approval Step demo)
+
+---
+
 ## Project Structure
 
 ```
@@ -480,10 +520,13 @@ GitGuru/
 │   └── vectorstore.py        # S2: Persistent Chroma vector collection indexer & searcher
 ├── data/
 │   ├── chroma_db/            # Persistent Chroma collection storage
+│   ├── feedback.json         # Checkpoint 2: Thumbs up/down persistent user feedback
 │   ├── records.json          # Curated knowledge base records
 │   ├── sample_records.py     # Fallback sample records
 │   └── raw/                  # Downloaded documentation files
 ├── docs/
+│   ├── screenshots/
+│   │   └── ui_demo.png       # Checkpoint 2: Streamlit live demo screenshot
 │   ├── how_llms_work.md      # Deep learning & LLM architecture guide + Mermaid diagram
 │   └── questions.md          # 10 real user evaluation questions (with Q6 unanswerable)
 ├── eval/
@@ -498,8 +541,10 @@ GitGuru/
 │   ├── system_prompt.txt     # GitGuru persona, rules, and JSON schema
 │   ├── task_troubleshooting.txt # Prompt V1: Direct resolution
 │   └── task_concept_coach.txt   # Prompt V2: Structured grounded guidance
+├── ui/
+│   └── app.py                # Checkpoint 2: Streamlit Chat UI with citations, feedback, and {S}
 ├── .env.example              # Example environment configuration (Groq & Gemini keys)
-├── requirements.txt          # Project dependencies (FastAPI, LangGraph, ChromaDB, etc.)
-├── test_app.py               # Automated test suite (20 test suites)
+├── requirements.txt          # Project dependencies (FastAPI, LangGraph, Streamlit, ChromaDB, etc.)
+├── test_app.py               # Automated test suite (21 test suites)
 └── README.md                 # Documentation, 'How to run', and Evaluation Winner Table
 ```

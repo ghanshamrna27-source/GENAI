@@ -1,0 +1,22 @@
+[
+  {
+    "id": "fb_1795047872160",
+    "timestamp": "2026-11-19T05:54:32.160797",
+    "rating": "thumbs_up",
+    "query": "How do I clone a repository?",
+    "answer_preview": "Use git clone <url> to download a full copy of the remote repository.",
+    "mode": "RAG Search (/ask)",
+    "citations_count": 1,
+    "thread_id": "test_session"
+  },
+  {
+    "id": "fb_1795047992435",
+    "timestamp": "2026-11-19T05:56:32.435957",
+    "rating": "thumbs_up",
+    "query": "How do I clone a repository?",
+    "answer_preview": "Use git clone <url>.",
+    "mode": "RAG Search (/ask)",
+    "citations_count": 1,
+    "thread_id": "test_suite_thread"
+  }
+]
