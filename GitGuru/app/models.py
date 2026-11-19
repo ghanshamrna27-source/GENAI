@@ -1,5 +1,5 @@
 from dataclasses import asdict, dataclass
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Dict
 from pydantic import BaseModel, Field
 
 @dataclass
@@ -108,4 +108,24 @@ class AskResponse(BaseModel):
     retrieved_chunks: List[SemanticSearchResult] = Field(default=[], description="The retrieved context chunks")
     confidence: str = Field(..., description="Confidence rating: 'high', 'medium', or 'low'")
     is_grounded: bool = Field(..., description="Whether the response is strictly grounded in retrieved chunks")
+
+
+class AgentRequest(BaseModel):
+    query: Optional[str] = Field(default="", description="The user query or instruction for the agent")
+    thread_id: Optional[str] = Field(None, description="Optional thread/session ID for conversational memory")
+    approved: Optional[bool] = Field(None, description="Set to True to approve a pending destructive action")
+    agent_type: Optional[str] = Field("langgraph", description="Agent implementation: 'langgraph' or 'handwritten'")
+
+
+class AgentResponse(BaseModel):
+    query: str = Field(..., description="User query or command")
+    answer: str = Field(..., description="Agent response and guidance")
+    thread_id: str = Field(..., description="Thread / session ID in memory")
+    agent_type: str = Field("langgraph", description="The agent backend used")
+    pending_approval: Optional[Dict[str, Any]] = Field(None, description="Details of action awaiting human confirmation")
+    tools_called: List[str] = Field(default=[], description="List of tools invoked during reasoning")
+    is_approved: Optional[bool] = Field(None, description="Current approval status")
+    steps: List[Dict[str, Any]] = Field(default=[], description="Reasoning trace and tool execution steps")
+    messages_count: Optional[int] = Field(0, description="Total messages retained in session memory")
+
 

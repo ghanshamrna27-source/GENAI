@@ -23,6 +23,17 @@ GitGuru is an intelligent assistant designed to help beginners and developers le
   - `POST /questions`: Ask questions and receive relevant answers from the knowledge base
   - `POST /chat`: LLM-powered chat (Groq / Gemini) returning structured JSON (`answer`, `confidence`, `follow_up`)
   - `POST /ask`: RAG question answering grounded in retrieved documentation chunks with citations; strictly outputs 'I don't know' for Q6
+  - `POST /agent`: Autonomous agent endpoint coordinating RAG search and Git action tools with multi-turn memory and human-in-the-loop approval
+- **Agent Tools (`app/tools.py`):**
+  - `rag_search`: Searches GitGuru documentation chunks with citations
+  - `execute_git_action`: Safe & destructive Git action executor/simulator with risk detection ({T})
+  - `generate_git_workflow`: Step-by-step Git workflow planner for developer tasks
+  - JSON schemas for LLM function calling and LangChain `@tool` decorators
+- **Hand-Written ReAct Agent (`app/agent_loop.py`):**
+  - Pure-Python ReAct (Thought -> Action -> Action Input -> Observation) reasoning loop coordinating RAG search and tool {T} without external frameworks
+- **LangGraph Agent with Memory & Approval Step (`app/graph.py`):**
+  - Stateful `StateGraph` architecture with `MemorySaver` checkpointer for thread session memory
+  - Human-in-the-Loop Approval Step that intercepts destructive actions (e.g. `reset --hard`, `push --force`, `branch -D`) and pauses execution until approved
 - **Retrieval-Augmented Generation (RAG) Engine (`app/rag.py`):**
   - Answers GitGuru questions strictly from retrieved chunks with citations (`source`, `page`, `title`, `chunk_id`)
   - Built-in anti-hallucination guardrails: strictly outputs "I don't know" on unanswerable questions (e.g. Q6 formatted disk, Q15 non-Git tools)
@@ -224,6 +235,93 @@ Invoke-RestMethod -Uri "http://127.0.0.1:8000/ask" -Method Post -Body $q6Body -C
 }
 ```
 
+#### Autonomous Agent Execution (POST /agent)
+
+**Example 1: Safe Workflow Query (LangGraph with Memory)**
+```powershell
+$agentBody = @{
+    query = "How do I clone a repository and check working status?"
+    thread_id = "user_session_101"
+    agent_type = "langgraph"
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/agent" -Method Post -Body $agentBody -ContentType "application/json"
+```
+```json
+{
+  "query": "How do I clone a repository and check working status?",
+  "answer": "Based on the official GitGuru documentation for **Clone Repository (git clone)** (Page 4):\nUse 'git clone <url>' to download a full copy of a remote repository...\n\n**Executed Git Action:** `git status`\n```\nOn branch main\nYour branch is up to date with 'origin/main'.\nnothing to commit, working tree clean\n```\n\n**Sources & Citations:**\n- [Clone Repository (git clone)] (Page 4) <https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository> [doc_004_chunk_03]",
+  "thread_id": "user_session_101",
+  "agent_type": "langgraph",
+  "pending_approval": null,
+  "tools_called": ["rag_search", "execute_git_action"],
+  "is_approved": null,
+  "steps": [...]
+}
+```
+
+**Example 2: Destructive Action Turn 1 (Human Approval Intercept)**
+```powershell
+$destructiveBody = @{
+    query = "Run git reset --hard to discard all local modifications"
+    thread_id = "user_session_102"
+    agent_type = "langgraph"
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/agent" -Method Post -Body $destructiveBody -ContentType "application/json"
+```
+```json
+{
+  "query": "Run git reset --hard to discard all local modifications",
+  "answer": "### Action Requires Confirmation\n⚠️ **Warning:** The requested action `git reset --hard` is destructive and could result in permanent data loss.\n\nAction 'reset_hard' (git reset --hard) is destructive and could result in permanent data loss. Explicit human approval is required before execution.\n\n**To execute this action, please resend your request with `approved=True` and `thread_id='user_session_102'`.**",
+  "thread_id": "user_session_102",
+  "agent_type": "langgraph",
+  "pending_approval": {
+    "action": "reset_hard",
+    "target": "HEAD~1",
+    "command": "git reset --hard",
+    "risk": "Destroys all uncommitted local modifications and moves HEAD backwards.",
+    "warning": "Action 'reset_hard' (git reset --hard) is destructive and could result in permanent data loss. Explicit human approval is required before execution.",
+    "requires_approval": true
+  },
+  "tools_called": ["rag_search"],
+  "is_approved": null
+}
+```
+
+**Example 3: Destructive Action Turn 2 (Resuming from Memory upon Human Approval)**
+```powershell
+$approveBody = @{
+    query = ""
+    thread_id = "user_session_102"
+    approved = $true
+    agent_type = "langgraph"
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/agent" -Method Post -Body $approveBody -ContentType "application/json"
+```
+```json
+{
+  "query": "Run git reset --hard to discard all local modifications",
+  "answer": "Based on the official GitGuru documentation for **Undo Changes and Commits (git reset & git revert)** (Page 12)...\n\n**Executed Git Action:** `git reset --hard HEAD~1`\n```\nHEAD is now at 2ea9277 (Hard reset executed to 'HEAD~1')\n```",
+  "thread_id": "user_session_102",
+  "agent_type": "langgraph",
+  "pending_approval": null,
+  "tools_called": ["rag_search", "execute_git_action"],
+  "is_approved": true
+}
+```
+
+**Example 4: Hand-Written ReAct Agent Mode**
+```powershell
+$hwBody = @{
+    query = "How do I stash uncommitted work and switch branches?"
+    agent_type = "handwritten"
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/agent" -Method Post -Body $hwBody -ContentType "application/json"
+```
+
 ---
 
 ### 4. Run Data Exploration with pandas
@@ -283,9 +381,28 @@ python -m app.rag "How do I recover a deleted branch from 6 months ago if my loc
 
 ---
 
-### 8. Run Automated Test Suite
+### 8. Run Agent Tools & Autonomous Agents via CLI
 
-Run the full end-to-end test suite (all 16 test suites including RAG and Q6 refusal):
+Test agent tools directly ({T} Safe & Destructive actions):
+```powershell
+python -m app.tools
+```
+
+Run the Hand-Written ReAct Agent Loop:
+```powershell
+python -m app.agent_loop "How do I clone a repository and create a new feature branch?"
+```
+
+Run the LangGraph Agent with Memory & Human Approval Step:
+```powershell
+python -m app.graph
+```
+
+---
+
+### 9. Run Automated Test Suite
+
+Run the full end-to-end test suite (all 20 test suites including RAG, Tools, ReAct Loop, and LangGraph):
 
 ```powershell
 python test_app.py
@@ -293,7 +410,7 @@ python test_app.py
 
 ---
 
-### 9. Run 15-Question RAG Evaluation & Tuning Benchmark
+### 10. Run 15-Question RAG Evaluation & Tuning Benchmark
 
 ```powershell
 python eval/run_eval.py
@@ -346,17 +463,20 @@ GitGuru/
 │   └── explore.py            # S2: pandas analysis printing 3 facts
 ├── app/
 │   ├── __init__.py
+│   ├── agent_loop.py         # S1: Hand-written ReAct agent coordinating RAG search & tools
 │   ├── chunking.py           # S1: Document chunker preserving source, page, title
 │   ├── cli.py                # Interactive CLI menu
 │   ├── embed.py              # S1: 384-dim dense embedding & semantic search engine
 │   ├── fetch.py              # Documentation scraper
+│   ├── graph.py              # S2: LangGraph agent with MemorySaver & human approval step
 │   ├── ingest.py             # HTML parser and record generator
 │   ├── llm.py                # LLM provider wrapper (Groq / Gemini / Grounded Fallback)
-│   ├── main.py               # FastAPI service (health, records, search, semantic search, questions, chat, ask)
-│   ├── models.py             # Pydantic schemas (AskRequest, AskResponse, Citation, etc.)
+│   ├── main.py               # FastAPI service (health, records, search, questions, chat, ask, agent)
+│   ├── models.py             # Pydantic schemas (AgentRequest, AgentResponse, AskRequest, etc.)
 │   ├── rag.py                # S1: RAG question answering engine with citations & Q6 refusal
 │   ├── records.py            # Record loading and persistence utilities
 │   ├── smart_search.py       # TF-IDF + Cosine similarity search ranker
+│   ├── tools.py              # S1: Agent tools (rag_search, execute_git_action, generate_git_workflow)
 │   └── vectorstore.py        # S2: Persistent Chroma vector collection indexer & searcher
 ├── data/
 │   ├── chroma_db/            # Persistent Chroma collection storage
@@ -379,7 +499,7 @@ GitGuru/
 │   ├── task_troubleshooting.txt # Prompt V1: Direct resolution
 │   └── task_concept_coach.txt   # Prompt V2: Structured grounded guidance
 ├── .env.example              # Example environment configuration (Groq & Gemini keys)
-├── requirements.txt          # Project dependencies
-├── test_app.py               # Automated test suite (16 test suites)
+├── requirements.txt          # Project dependencies (FastAPI, LangGraph, ChromaDB, etc.)
+├── test_app.py               # Automated test suite (20 test suites)
 └── README.md                 # Documentation, 'How to run', and Evaluation Winner Table
 ```

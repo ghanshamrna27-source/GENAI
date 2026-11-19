@@ -21,12 +21,16 @@ from app.models import (
     AskRequest,
     AskResponse,
     Citation,
+    AgentRequest,
+    AgentResponse,
 )
 from app.records import load_records, get_by_id
 from app.smart_search import rank_records
 from app.llm import generate_chat_response
 from app.vectorstore import query_semantic
 from app.rag import answer_question
+from app.graph import run_langgraph_agent
+from app.agent_loop import run_handwritten_agent
 
 app = FastAPI(
     title="GitGuru API",
@@ -60,6 +64,7 @@ def root():
             "ask_question": "POST /questions",
             "chat": "POST /chat",
             "rag_ask": "POST /ask",
+            "agent": "POST /agent",
         },
     }
 
@@ -193,6 +198,52 @@ def ask(payload: AskRequest):
     """
     response_data = answer_question(question=payload.question, top_k=payload.top_k or 3)
     return AskResponse(**response_data)
+
+
+@app.post("/agent", response_model=AgentResponse, status_code=status.HTTP_200_OK, tags=["Agent"])
+def agent_endpoint(payload: AgentRequest):
+    """
+    Autonomous GitGuru Agent Endpoint:
+    Executes developer tasks using LangGraph (with Memory & Human Approval Step) or Handwritten ReAct loop.
+    Coordinates RAG semantic search and Git action tool {T}.
+    Destructive actions pause with pending_approval until confirmed with approved=True.
+    """
+    mode = (payload.agent_type or "langgraph").lower()
+
+    if mode == "handwritten":
+        result = run_handwritten_agent(
+            query=payload.query,
+            approved=payload.approved is True,
+        )
+        return AgentResponse(
+            query=result["query"],
+            answer=result["final_answer"],
+            thread_id=payload.thread_id or "handwritten_session",
+            agent_type="handwritten",
+            pending_approval=result.get("pending_approval"),
+            tools_called=result.get("tools_called", []),
+            is_approved=payload.approved,
+            steps=result.get("steps", []),
+            messages_count=len(result.get("steps", [])),
+        )
+
+    # Default: LangGraph with memory and approval step
+    result = run_langgraph_agent(
+        query=payload.query,
+        thread_id=payload.thread_id,
+        approved=payload.approved,
+    )
+    return AgentResponse(
+        query=result["query"],
+        answer=result["answer"],
+        thread_id=result["thread_id"],
+        agent_type="langgraph",
+        pending_approval=result.get("pending_approval"),
+        tools_called=result.get("tools_called", []),
+        is_approved=result.get("is_approved"),
+        steps=result.get("steps", []),
+        messages_count=result.get("messages_count", 0),
+    )
 
 
 if __name__ == "__main__":
