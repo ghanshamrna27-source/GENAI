@@ -81,7 +81,14 @@ def agent_planner_node(state: AgentGraphState) -> Dict[str, Any]:
         }
 
     # 2. Check if RAG indicates an unanswerable question (e.g. Q6 formatted drive)
-    if rag_result and "i don't know" in rag_result.get("answer", "").lower():
+    is_action_request = any(
+        kw in q_lower
+        for kw in [
+            "reset --hard", "hard reset", "force push", "push --force",
+            "delete branch", "branch -d", "branch -d", "clean -f", "clean --force"
+        ]
+    )
+    if not is_action_request and rag_result and "i don't know" in rag_result.get("answer", "").lower():
         return {
             "pending_tool_call": None,
             "next_step": "respond",

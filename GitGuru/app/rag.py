@@ -153,7 +153,7 @@ def answer_question(
     """
     Main RAG function: Answers a GitGuru question strictly from retrieved chunks with citations.
     Enforces strict refusal: for Q6 and unanswerable questions, the answer MUST say "I don't know".
-    
+
     Returns:
       {
         "question": str,

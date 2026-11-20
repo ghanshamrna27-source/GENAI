@@ -148,7 +148,7 @@ if __name__ == "__main__":
     print("=" * 65)
     print("       GitGuru Document Chunking Diagnostic")
     print("=" * 65)
-    print(f"Total documents processed: 20")
+    print("Total documents processed: 20")
     print(f"Total chunks created:     {len(chunks)}")
     print(f"Average chunks per doc:   {len(chunks) / 20:.2f}")
 

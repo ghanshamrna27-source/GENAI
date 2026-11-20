@@ -101,7 +101,7 @@ if __name__ == "__main__":
     import sys
 
     search_query = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else "how do I resolve merge conflict"
-    print(f"=== GitGuru Smart Search (TF-IDF + Cosine Similarity) ===")
+    print("=== GitGuru Smart Search (TF-IDF + Cosine Similarity) ===")
     print(f"Query: '{search_query}'\n")
 
     matches = rank_records(search_query, limit=5, min_score=0.0)

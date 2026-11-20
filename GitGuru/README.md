@@ -110,6 +110,67 @@ Open [http://localhost:8501](http://localhost:8501) in your browser to explore t
 
 ---
 
+## Run with Docker
+
+GitGuru can be containerized and run with **Docker Compose**, starting both the FastAPI backend (`api`) and Streamlit web UI (`ui`) with a single command.
+
+### 1. Start Services with Docker Compose
+
+From the `GitGuru` directory, run:
+
+```bash
+docker compose up --build
+```
+
+This will build the container image and start two orchestrated services:
+- **`api` service (FastAPI):** runs on port `8000` with container healthchecks configured at `http://localhost:8000/health`.
+- **`ui` service (Streamlit):** runs on port `8501`, connected internally to `http://api:8000` via `GITGURU_API_URL`.
+
+### 2. Access the Application
+
+- **Streamlit Interactive UI:** [http://localhost:8501](http://localhost:8501)
+- **FastAPI Documentation (Swagger UI):** [http://localhost:8000/docs](http://localhost:8000/docs)
+- **FastAPI Alternative Docs (ReDoc):** [http://localhost:8000/redoc](http://localhost:8000/redoc)
+- **FastAPI Health Check:** [http://localhost:8000/health](http://localhost:8000/health)
+
+### 3. Stop Services
+
+```bash
+docker compose down
+```
+
+---
+
+## Testing and Code Quality
+
+GitGuru maintains automated test coverage across all subsystems and enforces strict code quality with **Ruff**.
+
+### 1. Run Automated Test Suite with Pytest
+
+Run the comprehensive 27-test suite across records, search, `/health`, `/ask` (with fake LLM mock), and the agent tool:
+
+```powershell
+pytest -v
+```
+
+**Test Coverage Highlights:**
+- `tests/test_records.py`: Record loading, schema integrity, ID lookups, limit parameter, and 404 handling.
+- `tests/test_search.py`: TF-IDF keyword search ranker and Chroma dense semantic vector search.
+- `tests/test_health.py`: System health check status, knowledge base metrics, and root route documentation.
+- `tests/test_ask_rag.py`: RAG `/ask` endpoint, verifiable citations, mock LLM patch (`call_groq`), offline grounded synthesis fallback, and strict refusal on Q6 (*"I don't know"*).
+- `tests/test_tools.py`: RAG search tool, safe Git execution, risk detection and approval requirement for destructive actions (`reset --hard`), and workflow generation.
+- `tests/test_agent.py`: ReAct loop, LangGraph stateful multi-turn memory (`thread_id`), human approval pauses, and `/agent` endpoint.
+
+### 2. Lint and Format Verification with Ruff
+
+```powershell
+ruff check .
+```
+
+Configured in `pyproject.toml` with line length 120 and zero warnings.
+
+---
+
 ### 4. Test API Endpoints
 
 You can test the endpoints using PowerShell `Invoke-RestMethod` or `curl`:
@@ -541,9 +602,21 @@ GitGuru/
 │   ├── system_prompt.txt     # GitGuru persona, rules, and JSON schema
 │   ├── task_troubleshooting.txt # Prompt V1: Direct resolution
 │   └── task_concept_coach.txt   # Prompt V2: Structured grounded guidance
+├── tests/                    # S1: Pytest test suite (27 tests across records, search, health, ask, agent)
+│   ├── __init__.py
+│   ├── test_agent.py         # ReAct agent loop, destructive action approval, and POST /agent
+│   ├── test_ask_rag.py       # RAG citations, fake LLM mock patch, offline fallback, and Q6 refusal
+│   ├── test_health.py        # /health and root route status
+│   ├── test_records.py       # Record loading, lookup, limit, and 404 handling
+│   ├── test_search.py        # TF-IDF keyword search and Chroma dense semantic search
+│   └── test_tools.py         # rag_search, execute_git_action safety, and workflow planner
 ├── ui/
 │   └── app.py                # Checkpoint 2: Streamlit Chat UI with citations, feedback, and {S}
+├── .dockerignore             # Excludes venv, pycache, .env, git, caches from build context
 ├── .env.example              # Example environment configuration (Groq & Gemini keys)
+├── docker-compose.yml        # S2: Multi-container orchestration for FastAPI (8000) and Streamlit (8501)
+├── Dockerfile                # S2: Production multi-service Docker image for GitGuru API & UI
+├── pyproject.toml            # Ruff linter and pytest configuration
 ├── requirements.txt          # Project dependencies (FastAPI, LangGraph, Streamlit, ChromaDB, etc.)
 ├── test_app.py               # Automated test suite (21 test suites)
 └── README.md                 # Documentation, 'How to run', and Evaluation Winner Table

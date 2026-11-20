@@ -45,6 +45,7 @@ def get_embedding_function():
             self._fitted = False
 
         def __call__(self, input: List[str]) -> List[List[float]]:
+            from sklearn.decomposition import TruncatedSVD
             if not self._fitted:
                 chunks = chunk_all_documents()
                 corpus = [c["text"] for c in chunks] + input

@@ -1,0 +1,17 @@
+# .dockerignore
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.git
+.gitignore
+.env
+.pytest_cache
+.ruff_cache
+data/chroma_db/
+scratch/
+commit_msg.txt
+*.egg-info/
+dist/
+build/
