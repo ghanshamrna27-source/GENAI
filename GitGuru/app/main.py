@@ -7,7 +7,7 @@ and LLM-powered chat.
 """
 
 from typing import List, Optional
-from fastapi import FastAPI, HTTPException, Query, status
+from fastapi import FastAPI, HTTPException, Query, status, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.models import (
@@ -31,12 +31,22 @@ from app.vectorstore import query_semantic
 from app.rag import answer_question
 from app.graph import run_langgraph_agent
 from app.agent_loop import run_handwritten_agent
+from app.cache import GLOBAL_CACHE
+from app.security import is_prompt_injection, PROMPT_INJECTION_REFUSAL
+from app.observability import (
+    GLOBAL_TELEMETRY,
+    ObservabilityMiddleware,
+    estimate_tokens,
+)
 
 app = FastAPI(
     title="GitGuru API",
     description="Interactive Web API for learning Git and GitHub commands, workflows, and concepts.",
     version="1.0.0",
 )
+
+# Observability middleware (measures latency, logs request events, sets X-Process-Time-Ms)
+app.add_middleware(ObservabilityMiddleware)
 
 # Enable CORS for browser-based clients and local frontends
 app.add_middleware(
@@ -172,31 +182,101 @@ def ask_question(payload: QuestionRequest):
 
 
 @app.post("/chat", response_model=ChatResponse, status_code=status.HTTP_200_OK, tags=["LLM Chat"])
-def chat(payload: ChatRequest):
+def chat(payload: ChatRequest, response: Response = None):
     """
     Chat with GitGuru LLM Assistant (Groq / Gemini / Grounded Fallback).
-    Guided by a Git & GitHub system prompt.
+    Protected by Prompt Injection Defense and Response Caching.
     Returns structured JSON with fields:
       - answer: The solution or explanation
       - confidence: Assessment rating ('high', 'medium', 'low')
       - follow_up: Proactive next command or logical follow-up step
     """
+    # 1. Security Guardrail: Prompt Injection Check
+    is_injection, _ = is_prompt_injection(payload.message)
+    if is_injection:
+        if response is not None:
+            response.headers["X-Cache-Status"] = "BYPASS"
+            response.headers["X-Security-Flag"] = "INJECTION_ATTEMPT"
+        return ChatResponse(
+            answer=PROMPT_INJECTION_REFUSAL,
+            confidence="low",
+            follow_up="Please ask a question related to Git commands, workflows, or GitHub collaboration.",
+            provider="security-guardrail",
+            model="prompt-shield-v1",
+        )
+
+    # 2. Performance & Cost Optimization: In-Memory Cache Lookup
+    cache_key = f"chat:{payload.version or 'v2'}:{payload.provider or 'default'}:{payload.message}"
+    cached_data = GLOBAL_CACHE.get(cache_key)
+    if cached_data is not None:
+        if response is not None:
+            response.headers["X-Cache-Status"] = "HIT"
+            response.headers["X-Prompt-Tokens"] = "0"
+            response.headers["X-Completion-Tokens"] = "0"
+        return ChatResponse(**cached_data)
+
+    # 3. Cache Miss: Generate Chat Response
     response_data = generate_chat_response(
         query=payload.message,
         version=payload.version or "v2",
         provider=payload.provider,
     )
+    p_tokens = estimate_tokens(payload.message)
+    c_tokens = estimate_tokens(response_data.get("answer", ""))
+
+    if response is not None:
+        response.headers["X-Cache-Status"] = "MISS"
+        response.headers["X-Prompt-Tokens"] = str(p_tokens)
+        response.headers["X-Completion-Tokens"] = str(c_tokens)
+
+    GLOBAL_CACHE.set(cache_key, response_data, estimated_tokens=p_tokens + c_tokens)
     return ChatResponse(**response_data)
 
 
 @app.post("/ask", response_model=AskResponse, status_code=status.HTTP_200_OK, tags=["RAG"])
-def ask(payload: AskRequest):
+def ask(payload: AskRequest, response: Response = None):
     """
     RAG Question Answering Endpoint:
     Answers Git and GitHub questions strictly grounded in retrieved documentation chunks with citations.
     Enforces strict hallucination guardrails: outputs 'I don't know' for unanswerable questions (Q6).
+    Protected by Prompt Injection Defense and Response Caching.
     """
+    # 1. Security Guardrail: Prompt Injection Check
+    is_injection, _ = is_prompt_injection(payload.question)
+    if is_injection:
+        if response is not None:
+            response.headers["X-Cache-Status"] = "BYPASS"
+            response.headers["X-Security-Flag"] = "INJECTION_ATTEMPT"
+        return AskResponse(
+            question=payload.question,
+            answer=PROMPT_INJECTION_REFUSAL,
+            citations=[],
+            retrieved_chunks=[],
+            confidence="low",
+            is_grounded=False,
+        )
+
+    # 2. Performance & Cost Optimization: In-Memory Cache Lookup
+    cache_key = f"ask:{payload.top_k or 3}:{payload.question}"
+    cached_data = GLOBAL_CACHE.get(cache_key)
+    if cached_data is not None:
+        if response is not None:
+            response.headers["X-Cache-Status"] = "HIT"
+            response.headers["X-Prompt-Tokens"] = "0"
+            response.headers["X-Completion-Tokens"] = "0"
+        return AskResponse(**cached_data)
+
+    # 3. Cache Miss: Execute Grounded RAG Pipeline
     response_data = answer_question(question=payload.question, top_k=payload.top_k or 3)
+    p_tokens = estimate_tokens(payload.question)
+    c_tokens = estimate_tokens(response_data.get("answer", ""))
+
+    if response is not None:
+        response.headers["X-Cache-Status"] = "MISS"
+        response.headers["X-Prompt-Tokens"] = str(p_tokens)
+        response.headers["X-Completion-Tokens"] = str(c_tokens)
+
+    GLOBAL_CACHE.set(cache_key, response_data, estimated_tokens=p_tokens + c_tokens)
     return AskResponse(**response_data)
 
 
@@ -208,6 +288,21 @@ def agent_endpoint(payload: AgentRequest):
     Coordinates RAG semantic search and Git action tool {T}.
     Destructive actions pause with pending_approval until confirmed with approved=True.
     """
+    if payload.query:
+        is_injection, _ = is_prompt_injection(payload.query)
+        if is_injection:
+            return AgentResponse(
+                query=payload.query,
+                answer=PROMPT_INJECTION_REFUSAL,
+                thread_id=payload.thread_id or "security_session",
+                agent_type="security-guardrail",
+                pending_approval=None,
+                tools_called=[],
+                is_approved=False,
+                steps=[{"node": "security_check", "status": "BLOCKED", "reason": "PROMPT_INJECTION"}],
+                messages_count=1,
+            )
+
     mode = (payload.agent_type or "langgraph").lower()
 
     if mode == "handwritten":
@@ -244,6 +339,19 @@ def agent_endpoint(payload: AgentRequest):
         steps=result.get("steps", []),
         messages_count=result.get("messages_count", 0),
     )
+
+
+@app.get("/metrics", tags=["Observability"])
+def get_metrics():
+    """
+    Exposes production observability telemetry:
+    - Traffic volume and endpoint distribution
+    - Request processing latency (average and P95)
+    - Token consumption (prompt, completion, and cache savings)
+    - Response cache performance and hit rates
+    - Estimated cost calculations
+    """
+    return GLOBAL_TELEMETRY.get_metrics()
 
 
 if __name__ == "__main__":

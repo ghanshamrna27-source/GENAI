@@ -1,6 +1,16 @@
 from dataclasses import asdict, dataclass
 from typing import Optional, List, Any, Dict
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+
+def validate_clean_string(v: Optional[str]) -> Optional[str]:
+    """Rejects null bytes and validates string integrity."""
+    if v is None:
+        return None
+    if "\x00" in v:
+        raise ValueError("Input contains illegal null bytes.")
+    return v.strip()
+
 
 @dataclass
 class Record:
@@ -40,9 +50,14 @@ class RecordSchema(BaseModel):
 
 
 class QuestionRequest(BaseModel):
-    question: str = Field(..., min_length=2, description="The Git or GitHub question to ask")
+    question: str = Field(..., min_length=2, max_length=1000, description="The Git or GitHub question to ask")
     category: Optional[str] = Field(None, description="Optional category (Git, GitHub, Git Branching, Troubleshooting, GitHub Actions)")
     asker: Optional[str] = Field("learner", description="Name or ID of the user asking the question")
+
+    @field_validator("question")
+    @classmethod
+    def check_question(cls, v: str) -> str:
+        return validate_clean_string(v)
 
 
 class QuestionResponse(BaseModel):
@@ -65,9 +80,14 @@ class HealthResponse(BaseModel):
 
 
 class ChatRequest(BaseModel):
-    message: str = Field(..., min_length=2, description="The Git/GitHub question or prompt for the assistant")
+    message: str = Field(..., min_length=2, max_length=1000, description="The Git/GitHub question or prompt for the assistant")
     version: Optional[str] = Field("v2", description="Prompt template version: 'v1' (direct) or 'v2' (structured & grounded)")
     provider: Optional[str] = Field(None, description="Optional LLM provider override ('groq', 'gemini')")
+
+    @field_validator("message")
+    @classmethod
+    def check_message(cls, v: str) -> str:
+        return validate_clean_string(v)
 
 
 class ChatResponse(BaseModel):
@@ -97,8 +117,13 @@ class Citation(BaseModel):
 
 
 class AskRequest(BaseModel):
-    question: str = Field(..., min_length=2, description="The Git or GitHub question to answer")
+    question: str = Field(..., min_length=2, max_length=1000, description="The Git or GitHub question to answer")
     top_k: Optional[int] = Field(default=3, ge=1, le=10, description="Number of context chunks to retrieve")
+
+    @field_validator("question")
+    @classmethod
+    def check_question(cls, v: str) -> str:
+        return validate_clean_string(v)
 
 
 class AskResponse(BaseModel):
@@ -111,10 +136,15 @@ class AskResponse(BaseModel):
 
 
 class AgentRequest(BaseModel):
-    query: Optional[str] = Field(default="", description="The user query or instruction for the agent")
+    query: Optional[str] = Field(default="", max_length=1000, description="The user query or instruction for the agent")
     thread_id: Optional[str] = Field(None, description="Optional thread/session ID for conversational memory")
     approved: Optional[bool] = Field(None, description="Set to True to approve a pending destructive action")
     agent_type: Optional[str] = Field("langgraph", description="Agent implementation: 'langgraph' or 'handwritten'")
+
+    @field_validator("query")
+    @classmethod
+    def check_query(cls, v: Optional[str]) -> Optional[str]:
+        return validate_clean_string(v) if v else ""
 
 
 class AgentResponse(BaseModel):
