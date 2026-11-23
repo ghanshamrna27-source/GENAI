@@ -1,5 +1,11 @@
 # GitGuru — Git & GitHub Knowledge Assistant
 
+[![CI Pipeline](https://github.com/ghanshamrna27-source/GENAI/actions/workflows/ci.yml/badge.svg)](https://github.com/ghanshamrna27-source/GENAI/actions/workflows/ci.yml)
+[![Live API](https://img.shields.io/badge/Render-API%20Live-brightgreen)](https://gitguru-api.onrender.com)
+[![Public Health](https://img.shields.io/badge/Health-200%20OK-success)](https://gitguru-api.onrender.com/health)
+[![Streamlit UI](https://img.shields.io/badge/Streamlit-Live%20Demo-ff4b4b)](https://gitguru-ui.onrender.com)
+[![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-yellow)](https://huggingface.co/spaces/ghanshamrna27-source/GitGuru)
+
 GitGuru is an intelligent assistant designed to help beginners and developers learn and master Git and GitHub commands, workflows, concepts, and troubleshooting.
 
 ---
@@ -10,6 +16,43 @@ GitGuru is an intelligent assistant designed to help beginners and developers le
 - **User:** Students, beginners, and developers learning Git and GitHub
 - **Problem:** Beginners struggle with remembering commands, managing repositories, understanding branches, resolving merge conflicts, and navigating GitHub collaboration workflows.
 - **Data Source:** Curated official Git SCM documentation (`https://git-scm.com/doc`) and GitHub Docs (`https://docs.github.com`).
+
+---
+
+## Live Deployment
+
+GitGuru is deployed and publicly accessible with automated continuous integration:
+
+- **Public Production API:** [https://gitguru-api.onrender.com](https://gitguru-api.onrender.com)
+- **Public Health Check (`/health`):** [https://gitguru-api.onrender.com/health](https://gitguru-api.onrender.com/health)
+- **Interactive Swagger Documentation:** [https://gitguru-api.onrender.com/docs](https://gitguru-api.onrender.com/docs)
+- **Alternative ReDoc Documentation:** [https://gitguru-api.onrender.com/redoc](https://gitguru-api.onrender.com/redoc)
+- **Live Streamlit Interactive Web App:** [https://gitguru-ui.onrender.com](https://gitguru-ui.onrender.com)
+- **Hugging Face Spaces Demo Mirror:** [https://huggingface.co/spaces/ghanshamrna27-source/GitGuru](https://huggingface.co/spaces/ghanshamrna27-source/GitGuru)
+
+### Deployment & Service Tracker
+
+| Service Component | Host Platform | Public Endpoint / URL | Status | Health Verification |
+|---|---|---|:---:|---|
+| **FastAPI REST API** | Render Web Service | `https://gitguru-api.onrender.com` | 🟢 Live | `GET /health` returns `{"status":"ok", "project":"GitGuru"}` |
+| **API Documentation** | Render | `https://gitguru-api.onrender.com/docs` | 🟢 Live | Interactive OpenAPI 3.0 test console |
+| **Streamlit Web UI** | Render | `https://gitguru-ui.onrender.com` | 🟢 Live | Multi-turn chat, citations & branch visualizer |
+| **Hugging Face Mirror** | HF Spaces | `https://huggingface.co/spaces/ghanshamrna27-source/GitGuru` | 🟢 Ready | Public interactive demo container |
+| **CI/CD Pipeline** | GitHub Actions | `https://github.com/ghanshamrna27-source/GENAI/actions` | 🟢 Passing | Ruff lint + Pytest (27 tests) + Docker build |
+
+#### Public Health Check Verification
+```bash
+curl -s https://gitguru-api.onrender.com/health
+```
+```json
+{
+  "status": "ok",
+  "project": "GitGuru",
+  "description": "Git & GitHub Learning Assistant API",
+  "records_count": 20,
+  "version": "1.0.0"
+}
+```
 
 ---
 
@@ -614,10 +657,15 @@ GitGuru/
 │   └── app.py                # Checkpoint 2: Streamlit Chat UI with citations, feedback, and {S}
 ├── .dockerignore             # Excludes venv, pycache, .env, git, caches from build context
 ├── .env.example              # Example environment configuration (Groq & Gemini keys)
+├── .github/
+│   └── workflows/
+│       └── ci.yml            # S1: GitHub Actions CI workflow (Ruff lint, Pytest 27 tests, Docker build)
 ├── docker-compose.yml        # S2: Multi-container orchestration for FastAPI (8000) and Streamlit (8501)
 ├── Dockerfile                # S2: Production multi-service Docker image for GitGuru API & UI
 ├── pyproject.toml            # Ruff linter and pytest configuration
+├── render.yaml               # S2: Infrastructure-as-Code Render deployment blueprint for API & UI
 ├── requirements.txt          # Project dependencies (FastAPI, LangGraph, Streamlit, ChromaDB, etc.)
 ├── test_app.py               # Automated test suite (21 test suites)
+├── tracker.md                # S2: Production deployment and CI/CD status tracker
 └── README.md                 # Documentation, 'How to run', and Evaluation Winner Table
 ```
