@@ -39,6 +39,7 @@ GitGuru is deployed and publicly accessible with automated continuous integratio
 | **Streamlit Web UI** | Render | `https://gitguru-ui.onrender.com` | 🟢 Live | Multi-turn chat, citations & branch visualizer |
 | **Hugging Face Mirror** | HF Spaces | `https://huggingface.co/spaces/ghanshamrna27-source/GitGuru` | 🟢 Ready | Public interactive demo container |
 | **CI/CD Pipeline** | GitHub Actions | `https://github.com/ghanshamrna27-source/GENAI/actions` | 🟢 Passing | Ruff lint + Pytest (27 tests) + Docker build |
+| **Merged Pull Request** | GitHub PR #1 | [PR #1 Link](https://github.com/ghanshamrna27-source/GENAI/pull/1) | 🟢 Merged | CI verified green before merging to `main` |
 
 #### Public Health Check Verification
 ```bash

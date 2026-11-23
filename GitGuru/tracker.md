@@ -57,5 +57,7 @@ This tracker monitors the CI/CD pipeline, automated testing status, and live pro
 - **Feature Branch:** `feature/ci-cd-and-deployment`
 - **Target Branch:** `main`
 - **PR Title:** `Day 12: CI/CD Pipeline (Ruff, Pytest, Docker Build) & Live Deployment`
-- **CI Status on PR:** 🟢 Green / Passed
-- **Merge State:** Merged
+- **PR Link:** [PR #1 on GitHub](https://github.com/ghanshamrna27-source/GENAI/pull/1)
+- **CI Status on PR:** 🟢 Green / Passed ([Run #45088026792](https://github.com/ghanshamrna27-source/GENAI/actions/runs/45088026792))
+- **Merge State:** 🟢 Merged into `main` (Merge Commit: `b396f96`)
+- **Main Branch CI Run:** 🟢 Green / Passed ([Run #45088418951](https://github.com/ghanshamrna27-source/GENAI/actions/runs/45088418951))
