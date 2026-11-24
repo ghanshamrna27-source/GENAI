@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitGuru — Technical Presentation</title>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: #121826;
+      --card-border: #232d42;
+      --text: #cbd5e1;
+      --text-muted: #94a3b8;
+      --heading: #f8fafc;
+      --accent: #f05032; /* Git Orange */
+      --accent-glow: rgba(240, 80, 50, 0.3);
+      --blue: #38bdf8;
+      --green: #22c55e;
+      --purple: #a855f7;
+      --yellow: #eab308;
+      --red: #ef4444;
+      --code-bg: #060911;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* Top Progress Bar */
+    .progress-bar-container {
+      width: 100%;
+      height: 4px;
+      background: #1e293b;
+    }
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--blue));
+      width: 20%;
+      transition: width 0.3s ease;
+    }
+
+    /* Header Nav */
+    header {
+      padding: 12px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--card-border);
+      background: rgba(18, 24, 38, 0.95);
+      backdrop-filter: blur(10px);
+    }
+    .logo-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo-badge {
+      background: var(--accent);
+      color: white;
+      font-weight: 800;
+      font-size: 13px;
+      padding: 4px 12px;
+      border-radius: 6px;
+      box-shadow: 0 0 14px var(--accent-glow);
+    }
+    .title-text {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--heading);
+    }
+    .slide-counter {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-family: monospace;
+      background: #1e293b;
+      padding: 4px 12px;
+      border-radius: 12px;
+    }
+
+    /* Main Slides Viewport */
+    main {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px 32px;
+      position: relative;
+    }
+
+    .slide {
+      display: none;
+      width: 100%;
+      max-width: 1200px;
+      height: 100%;
+      max-height: 720px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 34px 44px;
+      flex-direction: column;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      animation: fadeIn 0.25s ease;
+      overflow-y: auto;
+    }
+    .slide.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .slide-header {
+      margin-bottom: 22px;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 14px;
+    }
+    .slide-tag {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+    .slide-title {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--heading);
+    }
+    .slide-subtitle {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    /* Grids */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      flex: 1;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      flex: 1;
+    }
+
+    .card {
+      background: rgba(11, 15, 25, 0.7);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 20px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--heading);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-body {
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text-muted);
+    }
+    .card-body ul {
+      padding-left: 18px;
+    }
+    .card-body li {
+      margin-bottom: 6px;
+    }
+    .card-body strong {
+      color: var(--text);
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    .badge-get { background: #0284c724; color: #38bdf8; border: 1px solid #0284c7; }
+    .badge-post { background: #16a34a24; color: #4ade80; border: 1px solid #16a34a; }
+    .badge-danger { background: #dc262624; color: #f87171; border: 1px solid #dc2626; }
+    .badge-purple { background: #9333ea24; color: #c084fc; border: 1px solid #9333ea; }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-top: 6px;
+    }
+    th, td {
+      padding: 8px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--card-border);
+    }
+    th {
+      color: var(--heading);
+      background: rgba(30, 41, 59, 0.4);
+      font-weight: 600;
+    }
+    td code {
+      background: var(--code-bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #38bdf8;
+      font-family: monospace;
+    }
+
+    /* Architecture Visual Blocks */
+    .arch-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+    }
+    .arch-layer {
+      background: #060911;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .arch-label {
+      font-weight: 700;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      width: 160px;
+      flex-shrink: 0;
+      color: var(--blue);
+    }
+    .arch-nodes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      flex: 1;
+    }
+    .arch-node {
+      background: #121826;
+      border: 1px solid #232d42;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      color: var(--heading);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Bottom Footer & Controls */
+    footer {
+      padding: 12px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--card-border);
+      background: rgba(18, 24, 38, 0.95);
+    }
+    .controls {
+      display: flex;
+      gap: 10px;
+    }
+    .btn {
+      background: #1e293b;
+      color: var(--heading);
+      border: 1px solid var(--card-border);
+      padding: 7px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn:hover {
+      background: #334155;
+      border-color: #64748b;
+    }
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #e03c1e;
+    }
+    .help-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Progress Bar -->
+  <div class="progress-bar-container">
+    <div id="progress" class="progress-bar"></div>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <div class="logo-group">
+      <span class="logo-badge">GitGuru</span>
+      <span class="title-text">Core Technical Presentation</span>
+    </div>
+    <div class="slide-counter" id="slide-num">Slide 1 of 5</div>
+  </header>
+
+  <!-- Presentation Slides Viewport -->
+  <main>
+
+    <!-- SLIDE 1: Problem Statement -->
+    <section class="slide active" id="slide-1">
+      <div class="slide-header">
+        <div class="slide-tag">Section 1</div>
+        <h1 class="slide-title">Problem Statement</h1>
+        <p class="slide-subtitle">The Version Control Crisis &amp; The Critical Flaws of Generic LLMs</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="card" style="border-left: 4px solid var(--red);">
+          <div class="card-title" style="color: #f87171;">❌ 1. Developer Pain &amp; Code Loss</div>
+          <div class="card-body">
+            <ul>
+              <li><strong>Over 40% of Junior Devs Experience Code Loss:</strong> Destructive commands like <code>git reset --hard</code>, corrupt merge conflict resolutions, and detached HEAD states cause irreversible data loss.</li>
+              <li><strong>Commit &amp; Branch Paralysis:</strong> Developers fear experimenting with branches, stashing, and rebasing because terminal errors are intimidating and hard to undo.</li>
+              <li><strong>Lack of Visual Context:</strong> Git is a directed acyclic graph (DAG), but terminal commands provide no visual feedback on branch topology before execution.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card" style="border-left: 4px solid var(--yellow);">
+          <div class="card-title" style="color: var(--yellow);">⚠️ 2. Why Generic LLMs Fail at Git</div>
+          <div class="card-body">
+            <ul>
+              <li><strong>Dangerous Unwarned Commands:</strong> Standard chatbots casually recommend destructive commands like <code>git push --force</code> or <code>git clean -fd</code> without repository awareness or confirmation.</li>
+              <li><strong>Hallucinated Flags:</strong> LLMs routinely invent non-existent CLI flags and invalid syntax.</li>
+              <li><strong>No Source Verification:</strong> Generic AI provides ungrounded answers with zero verifiable documentation citations.</li>
+              <li><strong>Impossible Data Claims:</strong> Standard LLMs fail to say "I don't know" on impossible recovery scenarios (e.g. recovering code from zeroed hard drives without remotes).</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 2: Technologies Used -->
+    <section class="slide" id="slide-2">
+      <div class="slide-header">
+        <div class="slide-tag">Section 2</div>
+        <h1 class="slide-title">Technologies Used</h1>
+        <p class="slide-subtitle">Modern Multi-Tier Stack Built for Performance, Grounding, and Safety</p>
+      </div>
+
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-title">⚙️ Backend &amp; Agents</div>
+          <div class="card-body">
+            <ul>
+              <li><strong>FastAPI:</strong> High-performance async ASGI web framework.</li>
+              <li><strong>LangGraph:</strong> Stateful agent graphs with <code>MemorySaver</code> checkpointer.</li>
+              <li><strong>LangChain Core:</strong> Tool binding &amp; execution dispatcher.</li>
+              <li><strong>Pydantic v2:</strong> Strict request/response validation with 1,000-char limits.</li>
+              <li><strong>Python 3.11 / 3.14:</strong> Type-annotated, modern modular codebase.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🔍 Retrieval &amp; Multi-LLMs</div>
+          <div class="card-body">
+            <ul>
+              <li><strong>Persistent ChromaDB:</strong> Chunked vector storage (<code>gitguru_chunks</code>).</li>
+              <li><strong>ONNX all-MiniLM-L6-v2:</strong> 384-dimensional dense semantic embeddings.</li>
+              <li><strong>scikit-learn TF-IDF:</strong> Lexical search with Cosine Similarity keyword ranking.</li>
+              <li><strong>Google Gemini (3.8 Flash):</strong> Primary reasoning model with dynamic failover.</li>
+              <li><strong>Groq Cloud (GPT-OSS 120B):</strong> Ultra-fast secondary LLM provider.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🚀 UI, Security &amp; DevOps</div>
+          <div class="card-body">
+            <ul>
+              <li><strong>Streamlit:</strong> Interactive web UI with feedback loops and command simulation.</li>
+              <li><strong>Mermaid.js:</strong> Real-time visual branch DAG graph renderer.</li>
+              <li><strong>In-Memory LRU Cache:</strong> High-speed TTL cache (99.4% latency drop).</li>
+              <li><strong>Prompt Shield:</strong> Pre-inference regex injection defense.</li>
+              <li><strong>Docker &amp; GitHub Actions:</strong> Multi-stage containers, CI/CD, and 33 Pytest tests.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 3: System Requirements -->
+    <section class="slide" id="slide-3">
+      <div class="slide-header">
+        <div class="slide-tag">Section 3</div>
+        <h1 class="slide-title">System Requirements</h1>
+        <p class="slide-subtitle">Functional &amp; Non-Functional Engineering Constraints</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">📋 Functional Requirements (FR)</div>
+          <div class="card-body">
+            <ul>
+              <li><strong>FR-1 (Grounded RAG Pipeline):</strong> Retrieve relevant documentation chunks and synthesize responses with verifiable citations (<code>[Title, Page X]</code>).</li>
+              <li><strong>FR-2 (Strict Anti-Hallucination Guardrail):</strong> Must strictly return <em>"I don't know based on the provided documentation"</em> on impossible scenarios (e.g. Q6 formatted disk recovery).</li>
+              <li><strong>FR-3 (Human-in-the-Loop Safety Gate):</strong> Autonomous agent must intercept destructive Git actions (<code>reset --hard</code>, <code>push -f</code>) and pause with <code>pending_approval</code> until confirmed.</li>
+              <li><strong>FR-4 (Multi-Turn Conversational Memory):</strong> Persist conversation state across turns using session thread IDs (<code>thread_id</code>).</li>
+              <li><strong>FR-5 (Interactive Branch Simulator):</strong> Simulate and visually graph Git topology in Mermaid before commands touch disk.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">⚡ Non-Functional Requirements (NFR)</div>
+          <div class="card-body">
+            <ul>
+              <li><strong>NFR-1 (Sub-5ms Latency):</strong> In-memory LRU response cache with TTL must serve warm hits in &lt;5ms (benchmarked at 2.15ms).</li>
+              <li><strong>NFR-2 (Token &amp; Cost Efficiency):</strong> Cache hits must consume 0 LLM tokens, cutting overall production API costs by &gt;60%.</li>
+              <li><strong>NFR-3 (Input Security Shield):</strong> Enforce strict character limits (2–1,000 chars), null-byte stripping, and prompt injection defense.</li>
+              <li><strong>NFR-4 (Production Observability):</strong> Measure per-request latency via middleware, inject <code>X-Process-Time-Ms</code>, and expose live metrics at <code>GET /metrics</code>.</li>
+              <li><strong>NFR-5 (Automated Quality Gate):</strong> Maintain 100% test pass rate across 30+ Pytest tests with automated CI/CD verification.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 4: Architecture -->
+    <section class="slide" id="slide-4">
+      <div class="slide-header">
+        <div class="slide-tag">Section 4</div>
+        <h1 class="slide-title">System Architecture</h1>
+        <p class="slide-subtitle">5-Tier Workflow: Ingestion &rarr; Security Gateway &rarr; Application Engine &rarr; Retrieval &rarr; Multi-LLMs</p>
+      </div>
+
+      <div class="arch-container">
+        <div class="arch-layer">
+          <div class="arch-label">1. Client Layer</div>
+          <div class="arch-nodes">
+            <span class="arch-node">💻 Streamlit Web UI (ui/app.py)</span>
+            <span class="arch-node">🔌 Developer CLI &amp; curl</span>
+            <span class="arch-node">📄 OpenAPI Swagger (/docs)</span>
+          </div>
+        </div>
+
+        <div class="arch-layer">
+          <div class="arch-label">2. Security Gateway</div>
+          <div class="arch-nodes">
+            <span class="arch-node" style="color: var(--blue);">🛡️ ObservabilityMiddleware (Latency &amp; Token Logger)</span>
+            <span class="arch-node" style="color: var(--red);">🛑 Prompt Injection Shield (Regex Security Guardrail)</span>
+            <span class="arch-node" style="color: var(--green);">⚡ In-Memory LRU Cache (99.4% Latency Drop)</span>
+          </div>
+        </div>
+
+        <div class="arch-layer">
+          <div class="arch-label">3. Intelligence Engine</div>
+          <div class="arch-nodes">
+            <span class="arch-node">🔀 FastAPI Application Router (app/main.py)</span>
+            <span class="arch-node">📚 RAG Engine (app/rag.py)</span>
+            <span class="arch-node">🤖 LangGraph StateGraph (app/graph.py)</span>
+            <span class="arch-node">⚠️ Git Tool Approval Gate (app/tools.py)</span>
+          </div>
+        </div>
+
+        <div class="arch-layer">
+          <div class="arch-label">4. Retrieval &amp; Storage</div>
+          <div class="arch-nodes">
+            <span class="arch-node">🗄️ Persistent ChromaDB (gitguru_chunks)</span>
+            <span class="arch-node">📐 ONNX all-MiniLM-L6-v2 (384-dim Vectors)</span>
+            <span class="arch-node">📊 TF-IDF Lexical Cosine Ranker</span>
+          </div>
+        </div>
+
+        <div class="arch-layer">
+          <div class="arch-label">5. Inference Layer</div>
+          <div class="arch-nodes">
+            <span class="arch-node">✨ Google Gemini API (gemini-3.8-flash)</span>
+            <span class="arch-node">⚡ Groq Cloud API (openai/gpt-oss-120b)</span>
+            <span class="arch-node">🔒 Grounded Offline Deterministic Fallback</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 5: Explain Endpoints from main.py -->
+    <section class="slide" id="slide-5">
+      <div class="slide-header">
+        <div class="slide-tag">Section 5</div>
+        <h1 class="slide-title">Explaining the Endpoints in app/main.py</h1>
+        <p class="slide-subtitle">REST API Design for Search, RAG Synthesis, Multi-Turn Agents, and Telemetry</p>
+      </div>
+
+      <div style="overflow-x: auto; flex: 1;">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 120px;">Endpoint</th>
+              <th style="width: 130px;">Category</th>
+              <th>Functionality &amp; Execution Pipeline</th>
+              <th style="width: 140px;">Response Model</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-get">GET</span> <code>/health</code></td>
+              <td>Diagnostics</td>
+              <td>Public health monitor reporting API status, environment health, and knowledge base record count.</td>
+              <td><code>HealthResponse</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-get">GET</span> <code>/records</code></td>
+              <td>Knowledge Base</td>
+              <td>Lists all Git cheat-sheet command records with optional <code>limit</code> query parameter.</td>
+              <td><code>List[RecordSchema]</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-get">GET</span> <code>/search</code></td>
+              <td>Lexical Search</td>
+              <td>TF-IDF Cosine Similarity search over cheat-sheet command records with keyword ranking.</td>
+              <td><code>List[RecordSchema]</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-get">GET</span> <code>/search/semantic</code></td>
+              <td>Vector Search</td>
+              <td>Dense vector search querying ChromaDB; returns chunk text, source URL, page, and similarity score.</td>
+              <td><code>List[SemanticResult]</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-post">POST</span> <code>/chat</code></td>
+              <td>Conversational LLM</td>
+              <td>Multi-turn chat. Evaluates Prompt Shield &rarr; In-Memory Cache &rarr; Gemini/Groq LLM call &rarr; Token estimation.</td>
+              <td><code>ChatResponse</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-post">POST</span> <code>/ask</code></td>
+              <td>Grounded RAG</td>
+              <td>Flagship RAG endpoint. Retrieves chunks &rarr; checks Q6 refusal guardrail &rarr; synthesizes grounded response with citations.</td>
+              <td><code>AskResponse</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-post">POST</span> <code>/agent</code></td>
+              <td>Autonomous Agent</td>
+              <td>LangGraph agent executor. Tracks thread memory and intercepts destructive operations with <code>pending_approval</code>.</td>
+              <td><code>AgentResponse</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-get">GET</span> <code>/metrics</code></td>
+              <td>Observability</td>
+              <td>Exposes production metrics: latency (P50/P95), token consumption, cache hit rate, and cost savings.</td>
+              <td><code>TelemetryJSON</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer Navigation Controls -->
+  <footer>
+    <div class="help-hint">Use <strong>&larr; Left / Right &rarr;</strong> Arrow keys or Spacebar to navigate</div>
+    <div class="controls">
+      <button class="btn" id="prev-btn" onclick="prevSlide()">&#8592; Previous</button>
+      <button class="btn btn-primary" id="next-btn" onclick="nextSlide()">Next &#8594;</button>
+    </div>
+  </footer>
+
+  <script>
+    let currentSlide = 1;
+    const totalSlides = 5;
+
+    function updateSlide() {
+      // Toggle active slide
+      document.querySelectorAll('.slide').forEach((slide, idx) => {
+        slide.classList.toggle('active', idx + 1 === currentSlide);
+      });
+
+      // Update counter and progress bar
+      document.getElementById('slide-num').innerText = `Slide ${currentSlide} of ${totalSlides}`;
+      document.getElementById('progress').style.width = `${(currentSlide / totalSlides) * 100}%`;
+
+      // Button state
+      document.getElementById('prev-btn').disabled = currentSlide === 1;
+      document.getElementById('next-btn').innerText = currentSlide === totalSlides ? "Finish" : "Next \u2192";
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        currentSlide++;
+        updateSlide();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        currentSlide--;
+        updateSlide();
+      }
+    }
+
+    // Keyboard Navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        prevSlide();
+      }
+    });
+
+    updateSlide();
+  </script>
+</body>
+</html>
