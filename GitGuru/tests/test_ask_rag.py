@@ -28,7 +28,14 @@ def test_ask_endpoint_with_fake_llm():
     }
 
     with patch("app.llm.call_groq", return_value=fake_llm_response):
-        with patch.dict("os.environ", {"GROQ_API_KEY": "gsk_fake_test_key_12345"}):
+        with patch.dict(
+            "os.environ",
+            {
+                "GROQ_API_KEY": "gsk_fake_test_key_12345",
+                "GEMINI_API_KEY": "",
+                "LLM_PROVIDER": "groq",
+            },
+        ):
             payload = AskRequest(
                 question="How do I clone an existing remote repository onto my local machine?",
                 top_k=2,
@@ -44,6 +51,49 @@ def test_ask_endpoint_with_fake_llm():
             assert "clone" in top_cit.title.lower()
             assert top_cit.page == 4
             assert top_cit.source.startswith("http")
+            assert "Sources & Citations" in res.answer
+
+
+def test_ask_endpoint_with_fake_gemini_llm():
+    """
+    Test POST /ask with Google Gemini: mocks call_gemini to verify that
+    when only GEMINI_API_KEY is provided (and GROQ_API_KEY is empty),
+    GitGuru seamlessly routes to Gemini and outputs grounded responses with citations.
+    """
+    fake_gemini_response = {
+        "answer": (
+            "To clone an existing repository onto your local machine, run 'git clone <url>'. "
+            "This downloads a full copy of all branches and history [Clone Repository (git clone), Page 4]."
+        ),
+        "confidence": "high",
+        "follow_up": "Check the remote URL with git remote -v.",
+        "provider": "gemini",
+        "model": "gemini-1.5-flash",
+    }
+
+    with patch("app.llm.call_gemini", return_value=fake_gemini_response):
+        with patch.dict(
+            "os.environ",
+            {
+                "GEMINI_API_KEY": "AIzaSy_fake_test_gemini_key_123",
+                "GROQ_API_KEY": "",
+                "LLM_PROVIDER": "gemini",
+            },
+        ):
+            payload = AskRequest(
+                question="How do I clone an existing remote repository onto my local machine?",
+                top_k=2,
+            )
+            res = ask(payload)
+
+            assert isinstance(res, AskResponse)
+            assert res.is_grounded is True
+            assert res.confidence in ("high", "medium")
+            assert len(res.citations) >= 1
+            top_cit = res.citations[0]
+            assert isinstance(top_cit, Citation)
+            assert "clone" in top_cit.title.lower()
+            assert top_cit.page == 4
             assert "Sources & Citations" in res.answer
 
 

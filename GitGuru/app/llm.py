@@ -17,7 +17,7 @@ from app.smart_search import rank_records
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def load_env_file():
+def load_env_file(override: bool = False):
     """
     Lightweight, pure-Python .env file loader.
     Populates os.environ without requiring external packages.
@@ -33,7 +33,7 @@ def load_env_file():
                     key, val = line.split("=", 1)
                     key = key.strip()
                     val = val.strip().strip("'\"")
-                    if key not in os.environ:
+                    if override or key not in os.environ or not os.environ[key]:
                         os.environ[key] = val
             except Exception:
                 pass
@@ -85,68 +85,97 @@ def call_groq(
     system_prompt: str,
     user_prompt: str,
     api_key: str,
-    model: str = "llama-3.3-70b-versatile",
+    model: str = "openai/gpt-oss-120b",
     temperature: float = 0.2,
     max_tokens: int = 1024,
 ) -> Dict[str, Any]:
-    """Calls Groq Cloud OpenAI-compatible Chat Completions API."""
+    """Calls Groq Cloud OpenAI-compatible Chat Completions API with backup model fallback."""
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
     }
-    payload = {
-        "model": model,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-        "response_format": {"type": "json_object"},
-    }
+    models_to_try = [model]
+    for backup in ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "llama-3.3-70b-versatile"]:
+        if backup not in models_to_try:
+            models_to_try.append(backup)
 
-    resp = requests.post(url, headers=headers, json=payload, timeout=25)
-    resp.raise_for_status()
-    content = resp.json()["choices"][0]["message"]["content"]
-    parsed = parse_llm_json(content)
-    parsed["provider"] = "groq"
-    parsed["model"] = model
-    return parsed
+    last_exc = None
+    for target_model in models_to_try:
+        payload = {
+            "model": target_model,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "response_format": {"type": "json_object"},
+        }
+
+        try:
+            resp = requests.post(url, headers=headers, json=payload, timeout=25)
+            resp.raise_for_status()
+            content = resp.json()["choices"][0]["message"]["content"]
+            parsed = parse_llm_json(content)
+            parsed["provider"] = "groq"
+            parsed["model"] = target_model
+            return parsed
+        except Exception as e:
+            last_exc = e
+            continue
+
+    if last_exc:
+        raise last_exc
+    raise RuntimeError("Groq call failed with unknown error")
 
 
 def call_gemini(
     system_prompt: str,
     user_prompt: str,
     api_key: str,
-    model: str = "gemini-1.5-flash",
+    model: str = "gemini-3.8-flash",
     temperature: float = 0.2,
     max_tokens: int = 1024,
 ) -> Dict[str, Any]:
-    """Calls Google Gemini generateContent REST API."""
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
-    headers = {"Content-Type": "application/json"}
-    payload = {
-        "systemInstruction": {"parts": [{"text": system_prompt}]},
-        "contents": [{"parts": [{"text": user_prompt}]}],
-        "generationConfig": {
-            "temperature": temperature,
-            "maxOutputTokens": max_tokens,
-            "responseMimeType": "application/json",
-        },
-    }
+    """Calls Google Gemini generateContent REST API with automatic backup model fallback."""
+    models_to_try = [model]
+    if "gemini-3.5-flash" not in models_to_try:
+        models_to_try.append("gemini-3.5-flash")
 
-    resp = requests.post(url, headers=headers, json=payload, timeout=25)
-    resp.raise_for_status()
-    candidates = resp.json().get("candidates", [])
-    if not candidates:
-        raise ValueError("Gemini returned empty candidate response")
+    last_exc = None
+    for target_model in models_to_try:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{target_model}:generateContent?key={api_key}"
+        headers = {"Content-Type": "application/json"}
+        payload = {
+            "systemInstruction": {"parts": [{"text": system_prompt}]},
+            "contents": [{"parts": [{"text": user_prompt}]}],
+            "generationConfig": {
+                "temperature": temperature,
+                "maxOutputTokens": max_tokens,
+                "responseMimeType": "application/json",
+            },
+        }
 
-    content = candidates[0]["content"]["parts"][0]["text"]
-    parsed = parse_llm_json(content)
-    parsed["provider"] = "gemini"
-    parsed["model"] = model
-    return parsed
+        try:
+            resp = requests.post(url, headers=headers, json=payload, timeout=25)
+            resp.raise_for_status()
+            candidates = resp.json().get("candidates", [])
+            if not candidates:
+                raise ValueError("Gemini returned empty candidate response")
+
+            content = candidates[0]["content"]["parts"][0]["text"]
+            parsed = parse_llm_json(content)
+            parsed["provider"] = "gemini"
+            parsed["model"] = target_model
+            return parsed
+        except Exception as e:
+            last_exc = e
+            continue
+
+    if last_exc:
+        raise last_exc
+    raise RuntimeError("Gemini call failed with unknown error")
 
 
 def fallback_chat_response(query: str, version: str = "v2") -> Dict[str, Any]:
@@ -235,36 +264,36 @@ def generate_chat_response(
     target_provider = (
         provider
         or os.environ.get("LLM_PROVIDER")
-        or ("groq" if os.environ.get("GROQ_API_KEY") else ("gemini" if os.environ.get("GEMINI_API_KEY") else "offline"))
+        or ("gemini" if os.environ.get("GEMINI_API_KEY") else ("groq" if os.environ.get("GROQ_API_KEY") else "gemini"))
     ).lower()
 
     groq_key = os.environ.get("GROQ_API_KEY", "").strip()
     gemini_key = os.environ.get("GEMINI_API_KEY", "").strip()
 
-    # Route to Groq
-    if target_provider == "groq" and groq_key and not groq_key.startswith("gsk_your_"):
+    # Route to Gemini (default / primary provider)
+    if (target_provider == "gemini" or not groq_key) and gemini_key and not gemini_key.startswith("AIzaSy_your_"):
         try:
-            model = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
+            model = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
             temp = float(os.environ.get("TEMPERATURE", 0.2))
-            return call_groq(
+            return call_gemini(
                 system_prompt=system_prompt,
                 user_prompt=user_prompt,
-                api_key=groq_key,
+                api_key=gemini_key,
                 model=model,
                 temperature=temp,
             )
         except Exception:
             pass  # Fall back to offline grounded retrieval
 
-    # Route to Gemini
-    if (target_provider == "gemini" or gemini_key) and gemini_key and not gemini_key.startswith("AIzaSy_your_"):
+    # Route to Groq (secondary provider if configured)
+    if (target_provider == "groq" or not gemini_key) and groq_key and not groq_key.startswith("gsk_your_"):
         try:
-            model = os.environ.get("GEMINI_MODEL", "gemini-1.5-flash")
+            model = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
             temp = float(os.environ.get("TEMPERATURE", 0.2))
-            return call_gemini(
+            return call_groq(
                 system_prompt=system_prompt,
                 user_prompt=user_prompt,
-                api_key=gemini_key,
+                api_key=groq_key,
                 model=model,
                 temperature=temp,
             )

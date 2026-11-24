@@ -77,7 +77,8 @@ def build_rag_prompt(question: str, chunks: List[Dict[str, Any]]) -> str:
         f"Instructions:\n"
         f"1. Provide a direct, step-by-step grounded explanation.\n"
         f"2. Cite your sources using [Title, Page X].\n"
-        f"3. If unanswerable, explicitly state \"I don't know based on the provided GitGuru documentation.\""
+        f"3. If unanswerable, explicitly state \"I don't know based on the provided GitGuru documentation.\"\n"
+        f"4. Respond with a JSON object containing keys: \"answer\", \"confidence\" (\"high\", \"medium\", or \"low\"), and \"follow_up\"."
     )
 
 
@@ -253,11 +254,28 @@ def answer_question(
     # 4. Generate grounded answer
     raw_answer = None
 
-    # Check for available LLM API (Groq / Gemini)
+    # Check for available LLM API (Gemini primary / Groq secondary)
     groq_key = os.environ.get("GROQ_API_KEY", "").strip()
     gemini_key = os.environ.get("GEMINI_API_KEY", "").strip()
+    target_provider = (provider or os.environ.get("LLM_PROVIDER") or "gemini").lower()
 
-    if groq_key and not groq_key.startswith("gsk_your_") and provider != "offline":
+    # Priority 1: Google Gemini (default)
+    if (target_provider == "gemini" or not groq_key) and gemini_key and not gemini_key.startswith("AIzaSy_your_") and provider != "offline":
+        try:
+            from app.llm import call_gemini
+            prompt = build_rag_prompt(clean_question, normalized_chunks)
+            res = call_gemini(
+                system_prompt="You are GitGuru, an expert Git assistant. Ground your response strictly in the provided context.",
+                user_prompt=prompt,
+                api_key=gemini_key,
+                temperature=0.1,
+            )
+            raw_answer = res.get("answer")
+        except Exception:
+            raw_answer = None
+
+    # Priority 2: Groq Cloud (if configured or requested)
+    if not raw_answer and groq_key and not groq_key.startswith("gsk_your_") and provider != "offline":
         try:
             from app.llm import call_groq
             prompt = build_rag_prompt(clean_question, normalized_chunks)
@@ -271,6 +289,7 @@ def answer_question(
         except Exception:
             raw_answer = None
 
+    # Priority 3: Gemini fallback
     if not raw_answer and gemini_key and not gemini_key.startswith("AIzaSy_your_") and provider != "offline":
         try:
             from app.llm import call_gemini
